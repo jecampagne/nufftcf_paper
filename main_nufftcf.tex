@@ -246,34 +246,27 @@ A conceptually different approach, introduced by \cite{1976Ap&SS..39..447L,1982A
 
 \cite{Rehfeld2011} found this approach competitive with kernel methods for univariate (ACF) problems but markedly worse for bivariate (CCF) problems. While the Lomb--Scargle method reuses the transform-multiply-invert idea of Section~\ref{sec:wk_regular}, it replaces the FFT with a nonuniform transform tailored to irregular sampling, with a computational cost of $O(n\,n_f)$ for $n_f$ frequencies.
 %
-\subsection{The Non-Uniform FFT and \nufftcf}
-\label{sec:nufft}
-%
-The Non-Uniform Fast Fourier Transform (NUFFT) generalizes the classical FFT to handle data sampled at non-uniform points in one domain, mapping them to a uniform grid in the other domain. Unlike a direct non-uniform Fourier sum, which scales as $O(n^2)$, the NUFFT achieves $O(n \log n)$ computational complexity through a three-step process: (1) a \textit{spreading} or \textit{gridding} step, where non-uniform data points are convolved with a smooth kernel (e.g., Gaussian, Kaiser-Bessel, or the "exponential of semicircle" kernel introduced by \cite{barnett2019finufft}) onto a fine, oversampled uniform grid; (2) a standard FFT on this grid; and (3) a \textit{deconvolution} step to correct for the kernel's effect in the frequency domain.
-
-
-Modern NUFFT libraries, such as \texttt{FINUFFT} \citep{barnett2019finufft}, are optimized for irregularly sampled data and offer rigorous error bounds. For example, \texttt{FINUFFT} uses an "exponential of semicircle" kernel to achieve near-optimal convergence rates for aliasing error, while avoiding precomputation to reduce memory overhead. Unlike earlier implementations (e.g., NFFT \citep{Keiner2009}, CMCL \citep{Greengard2004}), \texttt{FINUFFT} enables efficient on-the-fly evaluations.
-
-While prior work (e.g., \cite{Geoga2025}) has used NUFFT-based approaches for nonparametric spectral density estimation, these efforts target the power spectral density function rather than the lag-domain ACF/CCF estimators standard in astronomy and hydrogeology.  \nufftcf adopts a similar Fourier-domain strategy to Lomb--Scargle, however, it uses the Non-Uniform FFT from \texttt{FINUFFT}, achieving a comparable transform in $O(n \log n)$. This reformulation reproduces the numerical values of the established kernel estimators (Section~\ref{sec:kernel_estimators}) while achieving their favorable statistical properties at a much lower computational cost. To our knowledge, no existing package---in the astronomy, hydrogeology, or general scientific-Python ecosystems---provides an $O(n \log n)$ NUFFT-based evaluation of the kernel-weighted ACF/CCF estimators established by \cite{Rehfeld2011} and in production use in \pastas, nor a fast counterpart to the ZDCF/\pyzdcf family used in AGN reverberation mapping. \nufftcf's contribution is deliberately not a new correlation-function \textit{definition}: it targets numerical consistency with the existing, validated Gaussian/rectangular-kernel definitions, while changing \textit{how they are computed}.
-
-
-\nufftcf adopts a Fourier-domain strategy similar to Lomb--Scargle but replaces the least-squares fit with the NUFFT path from \texttt{FINUFFT}, achieving a comparable transform in $O(n \log n)$. This reformulation reproduces the numerical values of the established Gaussian and rectangular kernel estimators (Section~\ref{sec:kernel_estimators}), ensuring numerical consistency with tools like \pastas, while reducing the computational cost from $O(n^2)$ to $O(n \log n)$. To our knowledge, no existing package in the astronomy provides an $O(n \log n)$ NUFFT-based evaluation of the kernel-weighted ACF/CCF estimators established by \cite{Rehfeld2011} and in production use in \pastas, nor a fast counterpart to the ZDCF/\pyzdcf family used in AGN reverberation mapping. \nufftcf's contribution is deliberately not a new correlation-function \textit{definition}: it targets numerical consistency with the existing, validated Gaussian/rectangular-kernel definitions, while changing \textit{how they are computed}.
-
 \subsection{The Non-Uniform Fast Fourier Transform}
 \label{sec:nufft}
 %
 The NUFFT computes Fourier sums between nonuniformly and uniformly
 spaced points without forming the $O(n\cdot m)$ direct sum over all $n$
 sample points and $m$ output frequencies (or vice versa). Two of its
-three standard types are relevant here:
+three standard types are relevant here (see sign convention in Section~\ref{app:finufft-notes}):
 \begin{itemize}
     \item \textbf{Type 1} (``nonuniform to uniform''): given values $x_j$
     at nonuniform points $t_j$, $j=1,\dots,n$, compute
-    $\hat X(f_k) = \sum_j x_j\, e^{-2\pi i f_k t_j}$ at $m$
-    \textit{uniform} output frequencies $f_k$.
+    \begin{equation}
+    \hat X(f_k) = \sum_j x_j\, e^{i f_k t_j} := X_k
+    \end{equation}
+     at $m$ \textit{uniform} output frequencies $f_k$.
     \item \textbf{Type 2} (``uniform to nonuniform''): the adjoint
     operation, evaluating a uniformly-gridded Fourier series at
-    arbitrary nonuniform output points.
+    arbitrary nonuniform output points:
+        \begin{equation}
+    	x_j = \sum_k X_k\, e^{-i f_k t_j}
+    \end{equation}
+    
 \end{itemize}
 Modern NUFFT algorithms, including \texttt{FINUFFT}
 \citep{barnett2019finufft} which \nufftcf uses, compute both
@@ -287,16 +280,15 @@ by the Fourier transform of the spreading kernel---to correct for the
 smoothing the kernel introduced. Type 2 reverses this sequence. This
 spreading kernel is an internal numerical-accuracy device of the NUFFT
 algorithm itself, distinct from the statistical weighting kernels
-$b_k(\cdot)$ of Equation~\ref{eq:gaussian_kernel}; we return to how the
-two relate below.
-
+$b_k(\cdot)$ of Equation~\ref{eq:gaussian_kernel}. We return below to the distinction between the two kernels (spreading and statistical weighting).
+%
 \subsection{From kernel-weighted estimators to NUFFT: the nufftcf approach}
 \label{sec:nufftcf_approach}
-
+%
 \nufftcf's central observation is that the kernel-weighted
 estimator of Equation~\ref{eq:kernel_estimator} can be evaluated via
 Wiener--Khinchin using a NUFFT, rather than via a direct pairwise sum,
-whenever the weighting kernel $b_k$ is itself expressible as (or well
+whenever the weighting kernel $b_k(\cdot)$ is itself expressible as (or well
 approximated by) a smooth, compactly supported function of the
 lag---which the Gaussian and rectangular kernels used by \pastas
 are. Concretely, \nufftcf:
@@ -338,8 +330,8 @@ lag $k$, which both normalizes the correlation estimate and flags
 under-sampled lags. Computed naively this denominator is itself an
 $O(n^2)$ all-pairs sum. Because the sample times are sorted,
 \nufftcf instead computes it in $O(n)$ with a two-pointer scan
-(implemented as a \texttt{numba}-compiled kernel per supported weighting
-kernel; Algorithms~\ref{alg:b-generic}--\ref{alg:b-rect-generic} in
+implemented as a \texttt{numba}-compiled  \citep{Numba2015} kernel per supported weighting
+kernel (Algorithms~\ref{alg:b-generic}--\ref{alg:b-rect-generic} in
 Appendix~\ref{app:pair-count}), and, for the regular-grid classic-FFT estimators, recovers the
 same quantity for free by filtering the deterministic raw-pair-count
 ramp with the same discrete filter applied to the correlation
@@ -349,8 +341,8 @@ otherwise $O(n\log n)$ estimator.
 \textbf{Unified API.} All three estimator families implemented in
 \nufftcf---NUFFT-based, real-space, and classic-FFT (regular grid
 only)---share the calling convention
-\texttt{fn(lags, t, x, ...) -> (c, b)}, so that a user can move between
-them, e.g.\ to spot-check a NUFFT-based result against the real-space
+\texttt{fn(lags, t, x, ...) -> (c, b)}\footnote{\texttt{(c,b)} standing for "correlation estimate" and "effective pair count".}, so that a user can move between
+them, e.g.\ to check a NUFFT-based result against the real-space
 reference on a subset of the data, without altering the rest of an
 analysis pipeline.
 
