@@ -1,5 +1,6 @@
 \documentclass[twocolumn,numberedappendix,twocolappendix]{openjournal}
 
+
 \usepackage[dvipsnames]{xcolor}
 \usepackage{textgreek}
 \usepackage[utf8]{inputenc}
@@ -128,7 +129,7 @@ irregular sampling, such as the Lomb--Scargle periodogram \citep{2018ApJS..236..
 Each of these
 approaches has been implemented, refined, and benchmarked by different
 research communities---astronomy, geoscientific context  among
-them---largely independently of one another (Section~\ref{sec:related}).
+them---largely independently of one another (Section~\ref{sec:related_methodology}).
 What these approaches share is a computational cost that scales at best
 linearly per output lag and, in the pairwise binning/weighting case,
 quadratically overall in the number of observations $n$. This is
@@ -341,7 +342,7 @@ otherwise $O(n\log n)$ estimator.
 \textbf{Unified API.} All three estimator families implemented in
 \nufftcf---NUFFT-based, real-space, and classic-FFT (regular grid
 only)---share the calling convention
-\texttt{fn(lags, t, x, ...) -> (c, b)}\footnote{\texttt{(c,b)} standing for "correlation estimate" and "effective pair count".}, so that a user can move between
+\texttt{fn(lags, tx, x, [ty, y], ...) -> (c, b)}\footnote{\texttt{(c,b)} standing for "correlation estimate" and "effective pair count".}, so that a user can move between
 them, e.g.\ to check a NUFFT-based result against the real-space
 reference on a subset of the data, without altering the rest of an
 analysis pipeline.
@@ -349,13 +350,280 @@ analysis pipeline.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Comparison with pastas and pyZDCF}
 \label{sec:comparison}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-{\color{red}TODO: draft this section from notebook/pastas\_vs\_nufftcf.ipynb and
- notebook/zdcf\_vs\_nufftcf.ipynb (ACF and CCF use cases, synthetic and/or
- real data, agreement to what tolerance, any figure(s) to include).}
+%
+We now validate \nufftcf\ against two widely used, independently
+implemented estimators --- \pastas\ (kernel-weighted, real-space,
+Section~\ref{sec:kernel_estimators}) and \pyzdcf\ (equal-population
+slotting, Section~\ref{sec:slotting}) --- on synthetic series for which
+the ``true'' correlation function is known analytically. We treat ACF
+and CCF separately, since \pastas\ does not expose a cross-correlation
+estimator equivalent to its ACF (an internal cross-correlation code
+path exists but is not part of its public API), so the CCF benchmark
+below compares only \nufftcf\ against \pyzdcf.
+%
+\subsection{Test series and experimental setup}
+\label{sec:comparison_setup}
+%
+\textbf{ACF benchmark series.} We reuse the synthetic irregularly-sampled
+series from the \pastas\ autocorrelation-benchmark tutorial
+\citep{collenteur2019}, shown in Figure~\ref{fig:synthetic_series}. Two
+underlying stationary processes are generated over a ten-year span at a
+one-day base resolution:
+\begin{itemize}
+	\item \textbf{STS\_SIN} --- a pure sine wave of period $365.25$~d, with
+	analytical autocorrelation $\rho(\tau)=\cos(2\pi\tau/365.25)$;
+	\item \textbf{STS\_EXP} --- an AR(1)-like process obtained by convolving
+	white noise with a causal exponential kernel $e^{-t/\alpha}$,
+	$\alpha=10$~d; because this kernel coincides with the process'
+	autocovariance, its analytical ACF is $\rho(\tau)=e^{-\tau/\alpha}$.
+\end{itemize}
+Each process is then resampled onto three irregular time grids of
+increasing severity, yielding six benchmark series (STS\_SIN1--3,
+STS\_EXP1--3): (1) a mix of 30-day and 14-day regular sub-sampling with
+dense daily coverage over the last four years; (2) the same scheme with
+an additional three-year data gap; and (3) re-indexing onto a set of
+real, highly irregular groundwater-monitoring dates spanning 1960--2015,
+used verbatim from the \pastas\ tutorial. Series~3 is by far the
+sparsest and most irregular of the three ($n\sim 500$--600 points over
+55~years with long gaps), while series~1--2 alternate between decades of
+sparse sampling and a few years of dense daily coverage.
 
-{\color{red}[TODO: comparison figures/notebooks — ACF vs \pastas, CCF vs
-\pyzdcf.]}
+\textbf{CCF benchmark series.} Two complementary CCF setups are used, both
+without access to \pastas:
+\begin{enumerate}
+	\item \textit{Shifted-timestamp SIN/EXP networks}
+	(\texttt{nufftcf\_ccf\_demo.py}). The same SIN and EXP processes
+	used in the ACF benchmark are drawn over $n_{\rm days}=3650$~d, and
+	two independent, irregular observation networks $x(t)$ and $y(s)$
+	sample the identical underlying process values, with network~$y$'s
+	timestamps shifted by a known delay $\tau_0$ relative to network~$x$
+	($\sim43\%$ of days retained in each network). Because $x$ and $y$
+	are the same signal read at shifted times, the CCF should peak
+	exactly at $\tau=\tau_0$ with the ACF's own peak value ($1$ for these
+	unit-variance processes). We use $\tau_0=60$~d as the fiducial case
+	(Figures~\ref{fig:ccf_sin}--\ref{fig:ccf_exp}) and additionally sweep
+	$\tau_0\in\{20,60,120\}$~d for the EXP series
+	(Figure~\ref{fig:ccf_tau0}) to check that the recovered peak location
+	tracks the injected delay.
+	\item \textit{Coupled Ornstein--Uhlenbeck (OU) processes with variable
+		$\rho$.} Two independent latent OU-like processes $e_1(t)$,
+	$e_2(t)$ are generated with the same exponential-kernel construction
+	as STS\_EXP ($\alpha=10$~d), and combined as
+	\begin{equation}
+		X_1(t) = e_1(t),
+		\qquad
+		X_2(t) = \rho\, e_1(t-\tau_0) + \sqrt{1-\rho^2}\, e_2(t),
+		\label{eq:ou_coupling}
+	\end{equation}
+	with $\tau_0=60$~d and $\rho\in\{0.1,0.4,0.7,0.95\}$. Unlike the
+	shifted-timestamp case, here the lag is \emph{physical}: $X_2$ is a
+	genuinely delayed, partially decorrelated copy of $X_1$, contaminated
+	by an independent noise process. The two series are sampled on
+	independent irregular grids retaining $\sim40\%$ and $\sim60\%$ of
+	days, respectively, with no artificial timestamp shift. The
+	analytical cross-correlation function for this construction is
+	\begin{equation}
+		\rho_{X_1X_2}(\tau) = \rho\, e^{-|\tau-\tau_0|/\alpha},
+		\label{eq:ou_theory_ccf}
+	\end{equation}
+	i.e.\ an exponential peak of height $\rho$ centered at $\tau=\tau_0$
+	(Figure~\ref{fig:ccf_ou}).
+\end{enumerate}
+
+\textbf{Estimator configuration.} For \nufftcf\ we evaluate both the
+Gaussian and rectangular kernels (Equations~\ref{eq:gaussian_kernel},
+\ref{eq:rectangle_kernel}) via the NUFFT-based estimator (and, for the
+fiducial CCF case, the direct real-space evaluation as an accuracy
+cross-check), using \texttt{bin\_width}$=0.5$~d as the kernel-bandwidth
+control parameter for all ACF and CCF runs, and evaluating every
+integer lag from $1$ to $365$~d (ACF) or $1$ to $180$~d (CCF). For
+\pastas\ we call \texttt{ps.stats.acf} with \texttt{bin\_method} set to
+\texttt{"gaussian"} and \texttt{"rectangle"} and \texttt{max\_gap}=$30$~d,
+over the same lag range. For \pyzdcf\ we use \texttt{uniform\_sampling
+	= False}, \texttt{omit\_zero\_lags = True}, and its equal-population
+bin-size parameter \texttt{minpts}, the closest analogue to \nufftcf's
+and \pastas's bandwidth: we report \texttt{minpts}$=11$ (its default) for
+all CCF runs and both \texttt{minpts}$=11$ and \texttt{minpts}$=25$ for
+the ACF runs, with asymmetric Monte-Carlo error bars from $50$
+(ACF) or $100$ (CCF) resamplings. Because \pyzdcf\ adapts its bin
+boundaries to the pair count rather than to a fixed lag spacing, the
+number of lags it returns is set by the data and by \texttt{minpts}, not
+chosen by the user; it therefore always produces \emph{far fewer} lag
+points than the fixed grid used by \nufftcf\ (typically $\sim100$--$500$
+bins for the ACF series here, vs.\ the full requested grid of $365$ or
+$180$ points for \nufftcf, itself a direct consequence of \pyzdcf's
+equal-population-per-bin design, Section~\ref{sec:slotting}).
+%
+\subsection{Autocorrelation: nufftcf vs pastas and pyZDCF}
+\label{sec:comparison_acf}
+%
+Figures~\ref{fig:pastas_exp}--\ref{fig:pastas_sin} compare \nufftcf\ and
+\pastas\ on the EXP and SIN series, respectively, showing the estimated
+ACF together with the residual to the analytical truth for both the
+Gaussian and rectangular kernels. Across all six series the two
+implementations are visually indistinguishable and their RMSE against
+the analytical ACF agree to within the reported precision (e.g.\
+RMSE\,$=0.08$/$0.11$/$0.07$ for EXP1/2/3 and RMSE\,$=0.03$/$0.05$/$0.04$
+for SIN1/2/3, identical for \pastas\ and \nufftcf\ in every case). This
+confirms that \nufftcf's NUFFT-based, Wiener--Khinchin route reproduces
+the direct pairwise kernel-weighted estimator of
+Equation~\ref{eq:kernel_estimator} to the accuracy expected from its
+spectral-leakage bias (Section~\ref{sec:nufftcf_approach}), which here
+is negligible compared to the sampling and estimation noise common to
+both methods. The residuals for both methods grow with $n$-dependent
+gaps and departures from stationarity (e.g.\ around the transition
+between sparse and dense sampling in EXP1/2 near lag $\sim$40--100~d),
+which is a property of the underlying data and kernel bandwidth rather
+than of either estimator.
+
+Figures~\ref{fig:zdcf_exp}--\ref{fig:zdcf_sin} repeat the comparison
+against \pyzdcf. \nufftcf's Gaussian and rectangular estimates again
+track the analytical ACF closely and agree with the \pyzdcf\ points
+(within their Monte-Carlo error bars) wherever the two are directly
+comparable. The main qualitative difference is resolution and cost:
+\nufftcf\ returns a value at every requested lag (e.g.\ 365 points for
+these series) in a few tens to a few hundred milliseconds, whereas
+\pyzdcf\ returns only $\sim$300--500 equal-population bins (fewer still
+for the coarser \texttt{minpts}$=25$ setting) and requires several
+seconds per series --- a difference of two to three orders of magnitude
+in wall-clock time for a comparable, if coarser, lag coverage, driven by
+\pyzdcf's $O(n^2)$ pairwise scan plus Monte Carlo error resampling
+against \nufftcf's $O(n\log n)$ NUFFT evaluation.
+%
+\subsection{Cross-correlation: nufftcf vs pyZDCF}
+\label{sec:comparison_ccf}
+%
+Figures~\ref{fig:ccf_sin} and~\ref{fig:ccf_exp} show the fiducial
+$\tau_0=60$~d shifted-timestamp case for the SIN and EXP series,
+respectively, comparing \nufftcf's Gaussian estimate against its own
+real-space reference (left panels) and against its rectangular-kernel
+estimate (right panels), with \pyzdcf\ overlaid in both. The three
+\nufftcf\ variants agree essentially exactly with one another, and all
+three track \pyzdcf's sparser set of binned points within its error
+bars, correctly locating the CCF peak at the injected delay
+$\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak
+recovery is robust as $\tau_0$ is varied over $\{20,60,120\}$~d for the
+EXP series: both \nufftcf\ and \pyzdcf\ recover peaks consistent with
+the true delay (marked by the vertical dashed line), with \nufftcf's
+continuous curve making the peak location and shape considerably easier
+to read off than \pyzdcf's handful of bins per panel.
+
+Figure~\ref{fig:ccf_ou} presents the physically coupled OU-process test
+of Equation~\ref{eq:ou_coupling}, for which the analytical CCF
+(Equation~\ref{eq:ou_theory_ccf}) is overlaid as a solid black curve.
+Both \nufftcf\ kernels closely follow the analytical exponential peak at
+all four coupling strengths $\rho=0.1,0.4,0.7,0.95$, correctly recovering
+both the peak location $\tau_0=60$~d and its amplitude $\rho$, including
+in the weakly coupled, most noise-dominated case ($\rho=0.1$). The
+\pyzdcf\ points are statistically consistent with the same curve but,
+again, considerably sparser, particularly away from the peak where the
+lower pair density per equal-population bin widens the \pyzdcf\ error
+bars.
+
+Across both CCF test cases, the key practical difference between the two
+estimators is the same one seen for the ACF: \nufftcf\ delivers the
+cross-correlation at \emph{every} requested lag on a uniform grid,
+whereas \pyzdcf\ delivers a much coarser, data-dependent set of lags.
+This is not an implementation detail but a direct consequence of
+\pyzdcf's equal-population binning strategy (Section~\ref{sec:slotting}):
+by design, each \pyzdcf\ bin is sized to contain a comparable number of
+observation pairs, so that its statistical precision is roughly uniform
+across lags, at the cost of a lag resolution that varies with local pair
+density and is, in all cases studied here, far coarser than the
+per-lag, kernel-weighted estimate \nufftcf\ evaluates directly at each
+point of a user-chosen lag grid.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Figures
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{synthetic_series.pdf}
+	\caption{The eight synthetic series used in the ACF benchmark: the
+		fully-sampled reference processes (STS\_SIN, STS\_EXP) and their
+		three irregularly-sampled derivatives each (STS\_SIN1--3,
+		STS\_EXP1--3), reproduced from the \pastas\ autocorrelation-benchmark
+		tutorial.}
+	\label{fig:synthetic_series}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_exp_acf.pdf}
+	\caption{ACF of the STS\_EXP1--3 series: signal (top row), \pastas\
+		vs.\ \nufftcf\ Gaussian-kernel ACF against the analytical truth
+		(second row), and residuals for the Gaussian and rectangular kernels
+		(third and fourth rows), with matching RMSE values for both
+		estimators in every panel.}
+	\label{fig:pastas_exp}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_sin_acf.pdf}
+	\caption{Same as Figure~\ref{fig:pastas_exp}, for the STS\_SIN1--3
+		series.}
+	\label{fig:pastas_sin}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_exp_acf.pdf}
+	\caption{ACF of the STS\_EXP1--3 series: signal (top row) and ACF
+		(bottom row), comparing \nufftcf\ (Gaussian and rectangular kernels,
+		with per-series computation time) to \pyzdcf\ (\texttt{minpts}=11
+		and 25, with number of returned bins and computation time) and to
+		the analytical truth.}
+	\label{fig:zdcf_exp}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_sin_acf.pdf}
+	\caption{Same as Figure~\ref{fig:zdcf_exp}, for the STS\_SIN1--3
+		series.}
+	\label{fig:zdcf_sin}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_SIN_ccf.pdf}
+	\caption{CCF of the shifted-timestamp SIN network test
+		($\tau_0=60$~d): \nufftcf\ Gaussian vs.\ its own real-space reference
+		(left) and vs.\ its rectangular kernel (right), both compared to
+		\pyzdcf.}
+	\label{fig:ccf_sin}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_ccf.pdf}
+	\caption{Same as Figure~\ref{fig:ccf_sin}, for the shifted-timestamp
+		EXP network test.}
+	\label{fig:ccf_exp}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_tau0_ccf.pdf}
+	\caption{CCF peak recovery for the shifted-timestamp EXP network
+		test as the injected delay $\tau_0$ varies over $\{20,60,120\}$~d
+		($n\sim1500$ points per network): \nufftcf\ Gaussian vs.\ \pyzdcf,
+		with the true delay marked by the vertical dashed line.}
+	\label{fig:ccf_tau0}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_OUproc_rho_ccf.pdf}
+	\caption{CCF of the coupled Ornstein--Uhlenbeck processes of
+		Equation~\ref{eq:ou_coupling} ($\tau_0=60$~d, $\alpha=10$~d), for
+		coupling strengths $\rho=0.1,0.4,0.7,0.95$: \nufftcf\ (Gaussian and
+		rectangular kernels) and \pyzdcf\ against the analytical CCF of
+		Equation~\ref{eq:ou_theory_ccf}.}
+	\label{fig:ccf_ou}
+\end{figure*}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Timing Benchmarks}
