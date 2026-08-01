@@ -1,5 +1,8 @@
 \documentclass[twocolumn,numberedappendix,twocolappendix]{openjournal}
-
+\makeatletter
+\let\pre@bibdata\@empty      % empêche revtex d'ajouter jobnameNotes à \bibdata
+\def\@bibdataout@init{}      % empêche l'ouverture du flux d'écriture correspondant
+\makeatother
 
 \usepackage[dvipsnames]{xcolor}
 \usepackage{textgreek}
