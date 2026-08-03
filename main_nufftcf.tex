@@ -412,7 +412,7 @@ without access to \pastas:
 	are the same signal read at shifted times, the CCF should peak
 	exactly at $\tau=\tau_0$ with the ACF own peak value ($1$ for these
 	unit-variance processes). We use $\tau_0=60$~d as the fiducial case
-	(Figures~\ref{fig:ccf_sin}--\ref{fig:ccf_exp}) and additionally sweep
+	(Figure~\ref{fig:ccf_sin_exp}) and additionally sweep
 	$\tau_0\in\{20,60,120\}$~d for the \texttt{STS\_EXP} series
 	(Figure~\ref{fig:ccf_tau0}) to check that the recovered peak location
 	tracks the injected delay.
@@ -519,13 +519,13 @@ Figure~\ref{fig:zdcf_sin_exp} repeats the comparison against \texttt{pyzdcf}. Th
 \subsection{Cross-correlation: nufftcf vs pyZDCF}
 \label{sec:comparison_ccf}
 %
-Figures~\ref{fig:ccf_sin} and~\ref{fig:ccf_exp} show the fiducial
-$\tau_0=60$~d shifted-timestamp case for the SIN and EXP series,
-respectively, comparing \nufftcf's Gaussian estimate against its own
+Figure~\ref{fig:ccf_sin_exp}  show the fiducial
+$\tau_0=60$~d shifted-timestamp case for the  \texttt{STS\_SIN} and  \texttt{STS\_EXP} series,
+respectively, comparing \nufftcf  Gaussian estimate against its own
 real-space reference (left panels) and against its rectangular-kernel
-estimate (right panels), with \pyzdcf overlaid in both. The three
+estimate (right panels), with \pyzdcf estimate overlaid in both. The three
 \nufftcf variants agree essentially exactly with one another, and all
-three track \pyzdcf's sparser set of binned points within its error
+three track \pyzdcf sparser set of binned points within its error
 bars, correctly locating the CCF peak at the injected delay
 $\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak
 recovery is robust as $\tau_0$ is varied over $\{20,60,120\}$~d for the
@@ -533,10 +533,43 @@ EXP series: both \nufftcf and \pyzdcf recover peaks consistent with
 the true delay (marked by the vertical dashed line), with \nufftcf's
 continuous curve making the peak location and shape considerably easier
 to read off than \pyzdcf's handful of bins per panel.
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_SIN_ccf.pdf}
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_ccf.pdf}
+	\caption{Top: CCF of the shifted-timestamp  \texttt{STS\_SIN} test
+		($\tau_0=60$~d): \nufftcf Gaussian vs. its own real-space reference
+		(left) and vs. its rectangular kernel (right), both compared to
+		\pyzdcf. Bottom: Same legend for the shifted-timestamp
+		\texttt{STS\_EXP} test.}
+	\label{fig:ccf_sin_exp}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_tau0_ccf.pdf}
+	\caption{CCF peak recovery for the shifted-timestamp EXP network
+		test as the injected delay $\tau_0$ varies over $\{20,60,120\}$~d
+		($n\sim1500$ points per network): \nufftcf Gaussian vs.\ \pyzdcf,
+		with the true delay marked by the vertical dashed line.}
+	\label{fig:ccf_tau0}
+\end{figure*}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_OUproc_rho_ccf.pdf}
+	\caption{CCF of the coupled Ornstein--Uhlenbeck processes of
+		Equation~\ref{eq:ou_coupling} ($\tau_0=60$~d, $\alpha=10$~d), for
+		coupling strengths $\rho=0.1,0.4,0.7,0.95$: \nufftcf (Gaussian and
+		rectangular kernels) and \pyzdcf against the analytical CCF of
+		Equation~\ref{eq:ou_theory_ccf}.}
+	\label{fig:ccf_ou}
+\end{figure*}
+
 
 Figure~\ref{fig:ccf_ou} presents the physically coupled OU-process test
 of Equation~\ref{eq:ou_coupling}, for which the analytical CCF
-(Equation~\ref{eq:ou_theory_ccf}) is overlaid as a solid black curve.
+(Equation~\ref{eq:ou_theory_ccf}) is overlaid as a dashed black curve.
 Both \nufftcf kernels closely follow the analytical exponential peak at
 all four coupling strengths $\rho=0.1,0.4,0.7,0.95$, correctly recovering
 both the peak location $\tau_0=60$~d and its amplitude $\rho$, including
@@ -567,44 +600,7 @@ point of a user-chosen lag grid.
 
 
 
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_SIN_ccf.pdf}
-	\caption{CCF of the shifted-timestamp SIN network test
-		($\tau_0=60$~d): \nufftcf Gaussian vs.\ its own real-space reference
-		(left) and vs.\ its rectangular kernel (right), both compared to
-		\pyzdcf.}
-	\label{fig:ccf_sin}
-\end{figure*}
 
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_ccf.pdf}
-	\caption{Same as Figure~\ref{fig:ccf_sin}, for the shifted-timestamp
-		EXP network test.}
-	\label{fig:ccf_exp}
-\end{figure*}
-
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_tau0_ccf.pdf}
-	\caption{CCF peak recovery for the shifted-timestamp EXP network
-		test as the injected delay $\tau_0$ varies over $\{20,60,120\}$~d
-		($n\sim1500$ points per network): \nufftcf Gaussian vs.\ \pyzdcf,
-		with the true delay marked by the vertical dashed line.}
-	\label{fig:ccf_tau0}
-\end{figure*}
-
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_OUproc_rho_ccf.pdf}
-	\caption{CCF of the coupled Ornstein--Uhlenbeck processes of
-		Equation~\ref{eq:ou_coupling} ($\tau_0=60$~d, $\alpha=10$~d), for
-		coupling strengths $\rho=0.1,0.4,0.7,0.95$: \nufftcf (Gaussian and
-		rectangular kernels) and \pyzdcf against the analytical CCF of
-		Equation~\ref{eq:ou_theory_ccf}.}
-	\label{fig:ccf_ou}
-\end{figure*}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
