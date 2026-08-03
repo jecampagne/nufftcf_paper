@@ -427,7 +427,7 @@ without access to \pastas:
 		X_2(t) &= \rho\, e_1(t-\tau_0) + \sqrt{1-\rho^2}\, e_2(t),
 		\label{eq:ou_coupling}
 	\end{align}
-	with $\tau_0=60$~d and $\rho\in\{0.1,0.4,0.7,0.95\}$. Unlike the
+	with $\tau_0=60$~d and $\rho\in\{0.1,0.2,0.3,0.5,0.7,0.95\}$. Unlike the
 	shifted-timestamp case, here the lag is \emph{physical}: $X_2$ is a
 	genuinely delayed, partially decorrelated copy of $X_1$, contaminated
 	by an independent noise process. The two series are sampled on
@@ -588,6 +588,98 @@ bars.
 	\end{tabular}
 }
 \end{table*}
+
+{\color{blue}
+	\subsection{Results analysis}
+	\label{sec:ccf_ou_analysis}
+	
+	Table~\ref{tab:peak_comparison_transposed} compares the estimated CCF peak
+	(amplitude and location) across the six tested values of $\rho$, for three
+	estimators: \texttt{nufftcf} with a Gaussian kernel, \texttt{nufftcf} with a
+	rectangular kernel, and \texttt{pyZDCF}. The theoretical expectation is
+	$\mathrm{peak\ val.}=\rho$ and $\mathrm{peak\ loc.}=\tau_0=60$~d
+	(Eq.~\ref{eq:ou_theory_ccf}).
+	
+	\paragraph{Peak location.}
+	For $\rho \geq 0.2$, both \texttt{nufftcf} variants correctly recover
+	$\tau_0=60$~d, whereas \texttt{pyZDCF} systematically places the peak near
+	$80.9$~d, i.e.\ a constant offset of about $+21$~d. This offset is an
+	intrinsic consequence of ZDCF's equal-population slotting algorithm: the
+	reported lag is the mean lag of the pairs contained in the highest-correlation
+	bin, not a fixed grid point, and bin edges are set purely by pair count rather
+	than by physical lag. Because the two series are sampled on independent
+	irregular grids with unequal retention fractions ($\sim40\%$ and $\sim60\%$),
+	the pair-density distribution is asymmetric around $\tau_0$, so the bin
+	centroid is systematically shifted away from the true peak. In other words,
+	\emph{given the sampling imposed by its own slotting scheme}, ZDCF is
+	structurally unable to resolve either the true peak location or its true
+	height with better precision than the bin width itself allows -- this is a
+	resolution limitation of the method, not a failure of the specific
+	realization. The $\rho=0.1$ case is atypical for both families of estimators:
+	the peak is found at $\mathrm{lag}=167$ (\texttt{nufftcf}) or $178.7$
+	(\texttt{pyZDCF}), far from $\tau_0=60$. At this weak coupling level, the
+	signal-to-noise ratio of the theoretical CCF is too low for the physical peak
+	to reliably dominate the estimated cross-correlation function, so the global
+	maximum is instead captured by a noise fluctuation rather than by the
+	expected physical peak.
+	
+	\paragraph{Peak amplitude.}
+	A systematic, $\rho$-dependent bias is visible: both \texttt{nufftcf} variants
+	\emph{overestimate} the peak amplitude relative to $\rho$, with an absolute
+	bias that decreases as $\rho \to 1$ (e.g.\ $+0.067$ at $\rho=0.1$ versus
+	$+0.012$ at $\rho=0.95$ for the Gaussian kernel). Conversely, \texttt{pyZDCF}
+	strongly \emph{underestimates} the peak amplitude over the whole tested range
+	(at best $0.154$ instead of $0.95$), with the absolute gap widening as $\rho$
+	increases. This underestimation is again a direct consequence of slotting:
+	averaging correlation over all pairs within a lag bin dilutes the peak
+	whenever the bin width exceeds the correlation length of the true CCF (here
+	set by the OU decay scale $\alpha=10$~d), which is unavoidable given ZDCF's
+	minimum-points-per-bin constraint (minpts$=11$) on this irregular sampling.
+	The rectangular kernel consistently yields a slightly higher amplitude than
+	the Gaussian kernel, the latter smoothing more strongly over the peak
+	neighborhood.
+	
+	\paragraph{On the systematic overestimation by \texttt{nufftcf}.}
+	We attribute the positive bias of \texttt{nufftcf} to two compounding
+	mechanisms. First, an \emph{interpolation/gridding bias}: \texttt{nufftcf}
+	implicitly resamples the irregular time series onto a regular grid by
+	spreading each irregular sample over neighboring grid nodes through the
+	chosen kernel (Gaussian or rectangular) before computing the correlation via
+	FFT. Because a single original sample contributes to several adjacent grid
+	nodes, this gridding step introduces spurious correlated errors between
+	neighboring points -- the same mechanism identified by
+	\citet{White1994} as a source of artificial correlation in
+	interpolation-based CCF estimators, and the original motivation for
+	\citet{Edelson1988} and later \citet{Alexander1997} (ZDCF) to correlate
+	pairs of points directly, without ever interpolating. This qualitatively
+	explains why \texttt{nufftcf} overestimates the peak while \texttt{pyZDCF},
+	by construction, is immune to this particular bias (although subject to
+	others, as discussed above). Second, a \emph{peak-selection bias}
+	(``winner's curse''/look-elsewhere effect): the reported value is a maximum
+	taken over a dense grid of lags. When the pointwise correlation estimator is
+	noisy, the maximum of a noisy realization systematically overestimates the
+	true underlying value, an effect that grows with the number of lags probed
+	(fine grid for \texttt{nufftcf}) and with the per-point estimator variance
+	(not reduced here, unlike ZDCF, which averages over many pairs per bin --
+	at the cost of diluting the peak, as noted above). This mechanism predicts
+	exactly the observed pattern: a positive bias that is largest when the true
+	signal $\rho$ is weak, and that shrinks as $\rho \to 1$, since the
+	correlation coefficient is bounded above by unity. The two effects likely
+	combine: gridding injects excess short-lag correlation, and reporting the
+	maximum over a fine lag grid further amplifies this bias through selection.
+	A natural mitigation would be to evaluate \texttt{nufftcf} on a coarser lag
+	grid (fewer effective trials) or to estimate and subtract this
+	selection bias via a bootstrap/Monte-Carlo procedure, analogous to the
+	internal Monte-Carlo simulations used by ZDCF.
+	
+	In summary, \texttt{nufftcf} correctly recovers the temporal location of the
+	coupling but overestimates its amplitude, due to a combination of gridding-
+	induced correlation and peak-selection bias, while \texttt{pyZDCF}
+	underestimates the amplitude and displaces the peak location, both effects
+	being an unavoidable consequence of the equal-population slotting resolution
+	imposed by its own algorithm rather than a stochastic estimation error.
+}
+
 
 Across both CCF test cases, the key practical difference between the two
 estimators is the same one seen for the ACF: \nufftcf delivers the
