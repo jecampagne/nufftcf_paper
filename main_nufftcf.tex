@@ -403,7 +403,7 @@ sparse sampling and a few years of dense daily coverage.
 \textbf{CCF benchmark series\footnote{see \texttt{nufftcf\_ccf\_demo.ipynb} notebook.}.} Two complementary CCF setups are used, both
 without access to \pastas:
 \begin{itemize}
-	\item Shifted-timestamp \texttt{SIN/EXP} series:. The same \texttt{SIN} and \texttt{EXP} processes
+	\item Shifted-timestamp \texttt{STS\_SIN/EXP} series:. The same \texttt{STS\_SIN} and \texttt{STS\_EXP} processes
 	used in the ACF benchmark are drawn over $n_{\rm days}=3650$~d, and
 	two independent, irregular observation networks $x(t_x)$ and $y(t_y)$
 	sample the identical underlying process values, with $y$-timestamps 
@@ -413,7 +413,7 @@ without access to \pastas:
 	exactly at $\tau=\tau_0$ with the ACF own peak value ($1$ for these
 	unit-variance processes). We use $\tau_0=60$~d as the fiducial case
 	(Figures~\ref{fig:ccf_sin}--\ref{fig:ccf_exp}) and additionally sweep
-	$\tau_0\in\{20,60,120\}$~d for the \texttt{EXP} series
+	$\tau_0\in\{20,60,120\}$~d for the \texttt{STS\_EXP} series
 	(Figure~\ref{fig:ccf_tau0}) to check that the recovered peak location
 	tracks the injected delay.
 	\item Coupled Ornstein--Uhlenbeck (OU) processes with variable
@@ -461,79 +461,60 @@ the ACF runs, with asymmetric Monte-Carlo error bars from $50$
 \subsection{Autocorrelation: \nufftcf vs \pastas and \pyzdcf}
 \label{sec:comparison_acf}
 %
-Figures~\ref{fig:pastas_exp}--\ref{fig:pastas_sin} compare \nufftcf and
-\pastas on the \texttt{EXP} and \texttt{SIN} series, respectively, showing the estimated
+Figures~\ref{fig:pastas_sin}--\ref{fig:pastas_exp} compare \nufftcf and
+\pastas on the \texttt{STS\_SIN} and \texttt{STS\_EXP} series, respectively, showing the estimated
 ACF together with the residual to the analytical truth for both the
 Gaussian and rectangular kernels. Across all six series the two
-implementations are visually indistinguishable and their RMSE against
-the analytical ACF agree to within the reported precision (e.g.\
-RMSE\,$=0.08$/$0.11$/$0.07$ for \texttt{EXP}1/2/3 and RMSE\,$=0.03$/$0.05$/$0.04$
-for \texttt{SIN}1/2/3, identical for \pastas and \nufftcf in every case). This
-confirms that \nufftcf NUFFT-based, Wiener--Khinchin route reproduces
+implementations are visually indistinguishable and their Root Mean Square Error (RMSE) against
+the analytical ACF agree to within the reported precision (e.g. $\mathrm{RMSE}=0.03/0.05/0.04$
+for \texttt{STS\_SIN}1/2/3 and $\mathrm{RMSE}=0.08/0.11/0.07$ for \texttt{STS\_EXP}1/2/3, 
+identical for \pastas and \nufftcf in every case). This
+confirms that \nufftcf, NUFFT-based Wiener--Khinchin methodology, reproduces
 the direct pairwise kernel-weighted estimator of
 Equation~\ref{eq:kernel_estimator} to the accuracy expected from its
 spectral-leakage bias (Section~\ref{sec:nufftcf_approach}), which here
 is negligible compared to the sampling and estimation noise common to
 both methods. The residuals for both methods grow with $n$-dependent
 gaps and departures from stationarity (e.g.\ around the transition
-between sparse and dense sampling in \texttt{EXP}1/2 near lag $\sim$40--100~d),
+between sparse and dense sampling in \texttt{STS\_EXP}1/2 near lag $\sim$40--100~d),
 which is a property of the underlying data and kernel bandwidth rather
 than of either estimator.
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_exp_acf.pdf}
-	\caption{ACF of the\texttt{STS\_EXP}1--3 series: signal (top row), \pastas
+	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_sin_acf.pdf}
+	\caption{ACF of the\texttt{STS\_SIN}1--3 series: signal (top row), \pastas
 		vs.\ \nufftcf Gaussian-kernel ACF against the analytical truth
 		(second row), and residuals for the Gaussian and rectangular kernels
 		(third and fourth rows), with matching RMSE values for both
 		estimators in every panel.}
-	\label{fig:pastas_exp}
-\end{figure*}
-
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_sin_acf.pdf}
-	\caption{Same as Figure~\ref{fig:pastas_exp}, for the \texttt{STS\_SIN}1--3
-		series.}
 	\label{fig:pastas_sin}
 \end{figure*}
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_exp_acf.pdf}
-	\caption{ACF of the \texttt{STS\_EXP}1--3 series: signal (top row) and ACF
-		(bottom row), comparing \nufftcf (Gaussian and rectangular kernels,
-		with per-series computation time) to \pyzdcf (\texttt{minpts}=11
-		and 25, with number of returned bins and computation time) and to
-		the analytical truth.}
-	\label{fig:zdcf_exp}
+	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_exp_acf.pdf}
+	\caption{Same as Figure~\ref{fig:pastas_exp}, for the \texttt{STS\_EXP}1--3
+		series.}
+	\label{fig:pastas_exp}
 \end{figure*}
+
+
 
 \begin{figure*}
 	\centering
 	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_sin_acf.pdf}
-	\caption{Same as Figure~\ref{fig:zdcf_exp}, for the STS\_SIN1--3
+	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_exp_acf.pdf}
+	\caption{Top: ACF of the \texttt{STS\_SIN}1--3 series: signal (top row) and ACF
+		(bottom row), comparing \nufftcf (Gaussian and rectangular kernels,
+		with per-series computation time) to \pyzdcf (\texttt{minpts}=11
+		and 25, with number of returned bins and computation time) and to
+		the analytical truth. Bottom: Same for the \texttt{STS\_EXP}11--3
 		series.}
-	\label{fig:zdcf_sin}
+	\label{fig:zdcf_sin_exp}
 \end{figure*}
 
-
-Figures~\ref{fig:zdcf_exp}--\ref{fig:zdcf_sin} repeat the comparison
-against \pyzdcf. \nufftcf's Gaussian and rectangular estimates again
-track the analytical ACF closely and agree with the \pyzdcf points
-(within their Monte-Carlo error bars) wherever the two are directly
-comparable. The main qualitative difference is resolution and cost:
-\nufftcf returns a value at every requested lag (e.g.\ 365 points for
-these series) in a few tens to a few hundred milliseconds, whereas
-\pyzdcf returns only $\sim$300--500 equal-population bins (fewer still
-for the coarser \texttt{minpts}$=25$ setting) and requires several
-seconds per series --- a difference of two to three orders of magnitude
-in wall-clock time for a comparable, if coarser, lag coverage, driven by
-\pyzdcf's $O(n^2)$ pairwise scan plus Monte Carlo error resampling
-against \nufftcf's $O(n\log n)$ NUFFT evaluation.
-
-
+Figure~\ref{fig:zdcf_sin_exp} repeats the comparison against \texttt{pyzdcf}. The \texttt{nufftcf} Gaussian and rectangular estimates, which closely follow the analytical ACF, agree with the \texttt{pyzdcf} points (within their Monte-Carlo error bars) wherever the two methods are directly comparable. The main qualitative differences are in resolution and computational cost: \texttt{nufftcf} returns a value at every requested lag for these series (e.g., $365$ points) in at most a few hundred milliseconds, whereas \texttt{pyzdcf} returns only $\sim 300$--$500$ equal-population bins (even fewer for the coarser $\mathrm{minpts}=25$ setting) and requires several seconds per series. These timing differences are driven by \texttt{pyzdcf} $O(n^2)$ pairwise scan and Monte Carlo error resampling, compared to \texttt{nufftcf} $O(n \log n)$ NUFFT evaluation.
 %
 \subsection{Cross-correlation: nufftcf vs pyZDCF}
 \label{sec:comparison_ccf}
