@@ -36,6 +36,8 @@
 \SetKwComment{tcp}{$\triangleright$\ }{}
 \usepackage{algpseudocode}
 
+\usepackage{booktabs}
+
 % mes definitions
 \newcommand{\bmtx}[1]{\mathbf{#1}}
 \DeclareMathOperator{\sinc}{sinc}
@@ -519,20 +521,9 @@ Figure~\ref{fig:zdcf_sin_exp} repeats the comparison against \texttt{pyzdcf}. Th
 \subsection{Cross-correlation: nufftcf vs pyZDCF}
 \label{sec:comparison_ccf}
 %
-Figure~\ref{fig:ccf_sin_exp}  show the fiducial
-$\tau_0=60$~d shifted-timestamp case for the  \texttt{STS\_SIN} and  \texttt{STS\_EXP} series,
-respectively, comparing \nufftcf  Gaussian estimate against its own
-real-space reference (left panels) and against its rectangular-kernel
-estimate (right panels), with \pyzdcf estimate overlaid in both. The three
-\nufftcf variants agree essentially exactly with one another, and all
-three track \pyzdcf sparser set of binned points within its error
-bars, correctly locating the CCF peak at the injected delay
-$\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak
-recovery is robust as $\tau_0$ is varied over $\{20,60,120\}$~d for the
-EXP series: both \nufftcf and \pyzdcf recover peaks consistent with
-the true delay (marked by the vertical dashed line), with \nufftcf's
-continuous curve making the peak location and shape considerably easier
-to read off than \pyzdcf's handful of bins per panel.
+Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp case for the \texttt{STS\_SIN} and \texttt{STS\_EXP} series, respectively. The \nufftcf Gaussian-kernel estimate is compared against its real-space reference (left panels) and its rectangular-kernel estimate (right panels). In both panels, the \pyzdcf estimate is also displayed. The three \nufftcf variants agree essentially exactly with one another, and all three also agree with the \pyzdcf sparser set of binned points within its error bars. Additionally, they correctly locate the CCF peak at the injected delay $\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak recovery is robust as $\tau_0$ is varied over $\{20, 60, 120\}$~d, exemplified for the \texttt{STS\_EXP} series: both \nufftcf and \pyzdcf recover peaks consistent with the true delay (marked by the vertical dashed line), with the \nufftcf continuous curve making the peak location and shape considerably easier to read off than the \pyzdcf handful of bins per panel.
+
+
 \begin{figure*}
 	\centering
 	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_SIN_ccf.pdf}
@@ -567,17 +558,36 @@ to read off than \pyzdcf's handful of bins per panel.
 \end{figure*}
 
 
-Figure~\ref{fig:ccf_ou} presents the physically coupled OU-process test
+Figure~\ref{fig:ccf_ou} presents the physically coupled  Ornstein-Uhlenbeck process test
 of Equation~\ref{eq:ou_coupling}, for which the analytical CCF
 (Equation~\ref{eq:ou_theory_ccf}) is overlaid as a dashed black curve.
 Both \nufftcf kernels closely follow the analytical exponential peak at
-all four coupling strengths $\rho=0.1,0.4,0.7,0.95$, correctly recovering
+all four coupling strengths $\rho=0.1,0.2,0.3,0.5,0.7,0.95$, correctly recovering
 both the peak location $\tau_0=60$~d and its amplitude $\rho$, including
 in the weakly coupled, most noise-dominated case ($\rho=0.1$). The
 \pyzdcf points are statistically consistent with the same curve but,
 again, considerably sparser, particularly away from the peak where the
 lower pair density per equal-population bin widens the \pyzdcf error
 bars.
+
+\begin{table*}
+	\centering
+	\caption{Comparaison des pics de corrélation croisée pour différentes valeurs de $\rho$.}
+	\label{tab:peak_comparison_transposed}
+	\resizebox{0.9\textwidth}{!}{%
+		\begin{tabular}{l cc cc cc cc cc cc}
+			\toprule
+			& \multicolumn{2}{c}{$\rho=0.1$} & \multicolumn{2}{c}{$\rho=0.2$} & \multicolumn{2}{c}{$\rho=0.3$} & \multicolumn{2}{c}{$\rho=0.5$} & \multicolumn{2}{c}{$\rho=0.7$} & \multicolumn{2}{c}{$\rho=0.95$} \\
+			\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}\cmidrule(lr){10-11}\cmidrule(lr){12-13}
+			Méthode & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. \\
+			\midrule
+			nufftcf gaussian  & 0.1673 & 167 & 0.2546 & 60 & 0.3508 & 60 & 0.5390 & 60 & 0.7241 & 60 & 0.9617 & 60 \\
+			nufftcf rectangle & 0.1777 & 167 & 0.2576 & 60 & 0.3551 & 60 & 0.5457 & 60 & 0.7332 & 60 & 0.9731 & 60 \\
+			pyZDCF             & 0.0720 & 178.7 & 0.0818 & 80.9 & 0.0943 & 80.9 & 0.1174 & 80.9 & 0.1375 & 80.9 & 0.1541 & 80.9 \\
+			\bottomrule
+	\end{tabular}
+}
+\end{table*}
 
 Across both CCF test cases, the key practical difference between the two
 estimators is the same one seen for the ACF: \nufftcf delivers the
