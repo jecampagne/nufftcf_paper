@@ -274,16 +274,20 @@ three standard types are relevant here (see sign convention in Section~\ref{app:
     \end{equation}
     
 \end{itemize}
-Modern NUFFT algorithms, including \texttt{FINUFFT}
-\citep{barnett2019finufft} which \nufftcf uses, compute both
-types in $O((n+m)\log(1/\varepsilon))$ time for a requested accuracy
-$\varepsilon$, by (i) \textit{spreading} each nonuniform sample onto a
-fine uniform grid using a compactly-supported interpolation kernel
-(\texttt{FINUFFT} uses an ``exponential of semicircle'' kernel chosen to
-minimize aliasing error for a given support width), (ii) taking a
-standard FFT of the fine grid, and (iii) \textit{deconvolving}---dividing
-by the Fourier transform of the spreading kernel---to correct for the
-smoothing the kernel introduced. Type 2 reverses this sequence. This
+
+Modern NUFFT algorithms, such as \texttt{FINUFFT} \citep{barnett2019finufft}
+(used by \nufftcf), compute both types in $O((n+m)\log(1/\varepsilon))$ time,
+where $\varepsilon$ is the requested accuracy. This is achieved by (i)
+\textit{gridding}, where each nonuniform sample is spread onto a fine uniform
+grid using a compactly-supported interpolation kernel (\texttt{FINUFFT} uses an
+``exponential of semicircle'' kernel, which is chosen to first minimize aliasing
+error for a given support width and secondly because its Fourier transform can
+be computed easily using a Gauss-Legendre quadrature integration), (ii) taking
+a standard FFT of the fine grid, and (iii) \textit{deconvolving} by dividing by
+the Fourier transform of the spreading kernel to correct for the smoothing
+introduced by the kernel.
+
+Type 2 reverses this sequence. This
 spreading kernel is an internal numerical-accuracy device of the NUFFT
 algorithm itself, distinct from the statistical weighting kernels
 $b_k(\cdot)$ of Equation~\ref{eq:gaussian_kernel}. We return below to the distinction between the two kernels (spreading and statistical weighting).
@@ -482,7 +486,7 @@ between sparse and dense sampling in \texttt{STS\_EXP}1/2 near lag $\sim$40--100
 which is a property of the underlying data and kernel bandwidth rather
 than of either estimator.
 
-\begin{figure*}
+\begin{figure*}[p]
 	\centering
 	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_sin_acf.pdf}
 	\caption{ACF of the\texttt{STS\_SIN}1--3 series: signal (top row), \pastas
@@ -518,7 +522,7 @@ than of either estimator.
 
 Figure~\ref{fig:zdcf_sin_exp} repeats the comparison against \texttt{pyzdcf}. The \texttt{nufftcf} Gaussian and rectangular estimates, which closely follow the analytical ACF, agree with the \texttt{pyzdcf} points (within their Monte-Carlo error bars) wherever the two methods are directly comparable. The main qualitative differences are in resolution and computational cost: \texttt{nufftcf} returns a value at every requested lag for these series (e.g., $365$ points) in at most a few hundred milliseconds, whereas \texttt{pyzdcf} returns only $\sim 300$--$500$ equal-population bins (even fewer for the coarser $\mathrm{minpts}=25$ setting) and requires several seconds per series. These timing differences are driven by \texttt{pyzdcf} $O(n^2)$ pairwise scan and Monte Carlo error resampling, compared to \texttt{nufftcf} $O(n \log n)$ NUFFT evaluation.
 %
-\subsection{Cross-correlation: nufftcf vs pyZDCF}
+\subsection{Cross-correlation: nufftcf vs pyZDCF\\ (\texttt{STS\_SIN/EXP} series)}
 \label{sec:comparison_ccf}
 %
 Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp case for the \texttt{STS\_SIN} and \texttt{STS\_EXP} series, respectively. The \nufftcf Gaussian-kernel estimate is compared against its real-space reference (left panels) and its rectangular-kernel estimate (right panels). In both panels, the \pyzdcf estimate is also displayed. The three \nufftcf variants agree essentially exactly with one another, and all three also agree with the \pyzdcf sparser set of binned points within its error bars. Additionally, they correctly locate the CCF peak at the injected delay $\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak recovery is robust as $\tau_0$ is varied over $\{20, 60, 120\}$~d, exemplified for the \texttt{STS\_EXP} series: both \nufftcf and \pyzdcf recover peaks consistent with the true delay (marked by the vertical dashed line), with the \nufftcf continuous curve making the peak location and shape considerably easier to read off than the \pyzdcf handful of bins per panel.
@@ -557,129 +561,186 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 	\label{fig:ccf_ou}
 \end{figure*}
 
-
-Figure~\ref{fig:ccf_ou} presents the physically coupled  Ornstein-Uhlenbeck process test
-of Equation~\ref{eq:ou_coupling}, for which the analytical CCF
-(Equation~\ref{eq:ou_theory_ccf}) is overlaid as a dashed black curve.
-Both \nufftcf kernels closely follow the analytical exponential peak at
-all four coupling strengths $\rho=0.1,0.2,0.3,0.5,0.7,0.95$, correctly recovering
-both the peak location $\tau_0=60$~d and its amplitude $\rho$, including
-in the weakly coupled, most noise-dominated case ($\rho=0.1$). The
-\pyzdcf points are statistically consistent with the same curve but,
-again, considerably sparser, particularly away from the peak where the
-lower pair density per equal-population bin widens the \pyzdcf error
-bars.
+%
+\subsection{Cross-correlation: nufftcf vs pyZDCF\\ (coupled OU-processes)}
+\label{sec:comparison_ccf_ouproc}
+%
 
 \begin{table*}
 	\centering
-	\caption{Comparaison des pics de corrélation croisée pour différentes valeurs de $\rho$.}
+	\caption{Comparison of cross-correlation peaks for different values of $\rho$.}
 	\label{tab:peak_comparison_transposed}
 	\resizebox{0.9\textwidth}{!}{%
 		\begin{tabular}{l cc cc cc cc cc cc}
 			\toprule
-			& \multicolumn{2}{c}{$\rho=0.1$} & \multicolumn{2}{c}{$\rho=0.2$} & \multicolumn{2}{c}{$\rho=0.3$} & \multicolumn{2}{c}{$\rho=0.5$} & \multicolumn{2}{c}{$\rho=0.7$} & \multicolumn{2}{c}{$\rho=0.95$} \\
+			$\tau_0=60$~d & \multicolumn{2}{c}{$\rho=0.1$} & \multicolumn{2}{c}{$\rho=0.2$} & \multicolumn{2}{c}{$\rho=0.3$} & \multicolumn{2}{c}{$\rho=0.5$} & \multicolumn{2}{c}{$\rho=0.7$} & \multicolumn{2}{c}{$\rho=0.95$} \\
 			\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}\cmidrule(lr){10-11}\cmidrule(lr){12-13}
-			Méthode & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. \\
+			Method & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. \\
 			\midrule
-			nufftcf gaussian  & 0.1673 & 167 & 0.2546 & 60 & 0.3508 & 60 & 0.5390 & 60 & 0.7241 & 60 & 0.9617 & 60 \\
-			nufftcf rectangle & 0.1777 & 167 & 0.2576 & 60 & 0.3551 & 60 & 0.5457 & 60 & 0.7332 & 60 & 0.9731 & 60 \\
-			pyZDCF             & 0.0720 & 178.7 & 0.0818 & 80.9 & 0.0943 & 80.9 & 0.1174 & 80.9 & 0.1375 & 80.9 & 0.1541 & 80.9 \\
+			\nufftcf gaussian  & 0.167 & 167 & 0.255 & 60 & 0.351 & 60 & 0.539 & 60 & 0.724 & 60 & 0.962 & 60 \\
+			\nufftcf rectangle & 0.178 & 167 & 0.258 & 60 & 0.355 & 60 & 0.546 & 60 & 0.733 & 60 & 0.973 & 60 \\
+			realspace gaussian & 0.181 & 167 & 0.256 & 60 & 0.352 & 60 & 0.538 & 60 & 0.722 & 60 & 0.957 & 60 \\
+			\pyzdcf             & 0.072 & 178.7 & 0.082 & 80.9 & 0.094 & 80.9 & 0.117 & 80.9 & 0.138 & 80.9 & 0.154 & 80.9 \\
 			\bottomrule
-	\end{tabular}
-}
+		\end{tabular}
+	}
 \end{table*}
+	
+Figure~\ref{fig:ccf_ou} presents the physically coupled  Ornstein-Uhlenbeck process test
+of Equation~\ref{eq:ou_coupling},  for which \nufftcf (Gaussian and rectangle kernels) and
+\pyzdcf estimates are displayed as weel as the analytical CCF
+(Equation~\ref{eq:ou_theory_ccf}) as a dashed black curve. 
+Table~\ref{tab:peak_comparison_transposed} compares the estimated CCF peak
+(amplitude and location) across the six tested values of $\rho$, for the three
+estimators. The theoretical expectation is a peak value of $\rho$ and a location of $\tau_0=60$~d, respectively
+(Eq.~\ref{eq:ou_theory_ccf}). We discuss the two peak charactireistics recovery.
+%
+\paragraph{\bf Peak location.}
+For $\rho \geq 0.2$, both \nufftcf kernel variants and the real-space Gaussian
+estimator correctly recover $\tau_0=60$~d, whereas \pyzdcf systematically
+places the peak near $80.9$~d, i.e.\ a constant offset of about $+21$~d.
+This offset is an intrinsic consequence of the equal-population slotting
+algorithm: the reported lag is the mean lag of the pairs contained in the
+highest-correlation bin, not a fixed grid point, and bin edges are set
+purely by pair count rather than by physical lag. 
+{\color{red}
+	 Because the two series are
+sampled on independent irregular grids with unequal retention fractions
+($\sim40\%$ and $\sim60\%$), the pair-density distribution is asymmetric
+around $\tau_0$, so the bin centroid is systematically shifted away from the
+true peak. In other words, \emph{given the sampling imposed by its own
+	slotting scheme}, \pyzdcf is structurally unable to resolve either the true
+peak location or its true height with better precision than the bin width
+itself allows -- this is a resolution limitation of the method, not a
+failure of the specific realization.
+}
+
+The $\rho=0.1$ case is atypical for all estimators: the peak is found at
+$\mathrm{lag}=167$~d (\nufftcf and real-space Gaussian alike) or $178.7$~d
+(\pyzdcf), far from $\tau_0=60$~d. At this weak coupling level, the
+signal-to-noise ratio of the theoretical CCF is too low for the physical
+peak to reliably dominate the estimated cross-correlation function, so the
+global maximum is instead captured by a noise fluctuation rather than by the
+expected physical peak.
+%
+\paragraph{\bf Peak amplitude.}
+A systematic, $\rho$-dependent bias is observed: \nufftcf (both kernels) and
+the real-space Gaussian estimator all \emph{overestimate} the peak amplitude
+compared to the true value, with an absolute bias that decreases with
+increasing $\rho$ (e.g., $+0.055$/$+0.058$/$+0.056$ at $\rho=0.2$ versus
+$+0.012$/$+0.023$/$+0.007$ at $\rho=0.95$, for \nufftcf Gaussian and rectangle kernels, and real-space Gaussian respectively). The fact that the exact, 
+the real-space evaluation shares essentially the same bias as the \nufftcf 
+NUFFT-based counterpart shows that this overestimation is inherent 
+to the kernel-weighted estimator itself, rather than a NUFFT-specific artifact. 
+We discuss this in more detail below. Note that the rectangular kernel consistently
+produces a slightly higher peak amplitude than the Gaussian kernel
+estimator, as the latter smooths more strongly over the peak neighborhood.
+
+In contrast, \pyzdcf strongly underestimates the amplitude across the entire
+tested range (at best estimating $0.154$ instead of $0.95$), with the
+absolute gap widening as $\rho$ increases. This underestimation is again a
+direct consequence of slotting, as discussed for the peak location.
 
 {\color{blue}
-	\subsection{Results analysis}
-	\label{sec:ccf_ou_analysis}
-	
-	Table~\ref{tab:peak_comparison_transposed} compares the estimated CCF peak
-	(amplitude and location) across the six tested values of $\rho$, for three
-	estimators: \texttt{nufftcf} with a Gaussian kernel, \texttt{nufftcf} with a
-	rectangular kernel, and \texttt{pyZDCF}. The theoretical expectation is
-	$\mathrm{peak\ val.}=\rho$ and $\mathrm{peak\ loc.}=\tau_0=60$~d
-	(Eq.~\ref{eq:ou_theory_ccf}).
-	
-	\paragraph{Peak location.}
-	For $\rho \geq 0.2$, both \texttt{nufftcf} variants correctly recover
-	$\tau_0=60$~d, whereas \texttt{pyZDCF} systematically places the peak near
-	$80.9$~d, i.e.\ a constant offset of about $+21$~d. This offset is an
-	intrinsic consequence of ZDCF's equal-population slotting algorithm: the
-	reported lag is the mean lag of the pairs contained in the highest-correlation
-	bin, not a fixed grid point, and bin edges are set purely by pair count rather
-	than by physical lag. Because the two series are sampled on independent
-	irregular grids with unequal retention fractions ($\sim40\%$ and $\sim60\%$),
-	the pair-density distribution is asymmetric around $\tau_0$, so the bin
-	centroid is systematically shifted away from the true peak. In other words,
-	\emph{given the sampling imposed by its own slotting scheme}, ZDCF is
-	structurally unable to resolve either the true peak location or its true
-	height with better precision than the bin width itself allows -- this is a
-	resolution limitation of the method, not a failure of the specific
-	realization. The $\rho=0.1$ case is atypical for both families of estimators:
-	the peak is found at $\mathrm{lag}=167$ (\texttt{nufftcf}) or $178.7$
-	(\texttt{pyZDCF}), far from $\tau_0=60$. At this weak coupling level, the
-	signal-to-noise ratio of the theoretical CCF is too low for the physical peak
-	to reliably dominate the estimated cross-correlation function, so the global
-	maximum is instead captured by a noise fluctuation rather than by the
-	expected physical peak.
-	
-	\paragraph{Peak amplitude.}
-	A systematic, $\rho$-dependent bias is visible: both \texttt{nufftcf} variants
-	\emph{overestimate} the peak amplitude relative to $\rho$, with an absolute
-	bias that decreases as $\rho \to 1$ (e.g.\ $+0.067$ at $\rho=0.1$ versus
-	$+0.012$ at $\rho=0.95$ for the Gaussian kernel). Conversely, \texttt{pyZDCF}
-	strongly \emph{underestimates} the peak amplitude over the whole tested range
-	(at best $0.154$ instead of $0.95$), with the absolute gap widening as $\rho$
-	increases. This underestimation is again a direct consequence of slotting:
-	averaging correlation over all pairs within a lag bin dilutes the peak
-	whenever the bin width exceeds the correlation length of the true CCF (here
-	set by the OU decay scale $\alpha=10$~d), which is unavoidable given ZDCF's
-	minimum-points-per-bin constraint (minpts$=11$) on this irregular sampling.
-	The rectangular kernel consistently yields a slightly higher amplitude than
-	the Gaussian kernel, the latter smoothing more strongly over the peak
-	neighborhood.
-	
-	\paragraph{On the systematic overestimation by \texttt{nufftcf}.}
-	We attribute the positive bias of \texttt{nufftcf} to two compounding
-	mechanisms. First, an \emph{interpolation/gridding bias}: \texttt{nufftcf}
-	implicitly resamples the irregular time series onto a regular grid by
-	spreading each irregular sample over neighboring grid nodes through the
-	chosen kernel (Gaussian or rectangular) before computing the correlation via
-	FFT. Because a single original sample contributes to several adjacent grid
-	nodes, this gridding step introduces spurious correlated errors between
-	neighboring points -- the same mechanism identified by
-	\citet{White1994} as a source of artificial correlation in
-	interpolation-based CCF estimators, and the original motivation for
-	\citet{Edelson1988} and later \citet{Alexander1997} (ZDCF) to correlate
-	pairs of points directly, without ever interpolating. This qualitatively
-	explains why \texttt{nufftcf} overestimates the peak while \texttt{pyZDCF},
-	by construction, is immune to this particular bias (although subject to
-	others, as discussed above). Second, a \emph{peak-selection bias}
-	(``winner's curse''/look-elsewhere effect): the reported value is a maximum
-	taken over a dense grid of lags. When the pointwise correlation estimator is
-	noisy, the maximum of a noisy realization systematically overestimates the
-	true underlying value, an effect that grows with the number of lags probed
-	(fine grid for \texttt{nufftcf}) and with the per-point estimator variance
-	(not reduced here, unlike ZDCF, which averages over many pairs per bin --
-	at the cost of diluting the peak, as noted above). This mechanism predicts
-	exactly the observed pattern: a positive bias that is largest when the true
-	signal $\rho$ is weak, and that shrinks as $\rho \to 1$, since the
-	correlation coefficient is bounded above by unity. The two effects likely
-	combine: gridding injects excess short-lag correlation, and reporting the
-	maximum over a fine lag grid further amplifies this bias through selection.
-	A natural mitigation would be to evaluate \texttt{nufftcf} on a coarser lag
-	grid (fewer effective trials) or to estimate and subtract this
-	selection bias via a bootstrap/Monte-Carlo procedure, analogous to the
-	internal Monte-Carlo simulations used by ZDCF.
-	
-	In summary, \texttt{nufftcf} correctly recovers the temporal location of the
-	coupling but overestimates its amplitude, due to a combination of gridding-
-	induced correlation and peak-selection bias, while \texttt{pyZDCF}
-	underestimates the amplitude and displaces the peak location, both effects
-	being an unavoidable consequence of the equal-population slotting resolution
-	imposed by its own algorithm rather than a stochastic estimation error.
-}
+\paragraph{\bf On the systematic overestimation by the Gaussian- and
+	rectangular-kernel estimators.}
+The real-space Gaussian-kernel peak amplitude 
+tracks the \texttt{nufftcf} Gaussian-kernel result closely at every $\rho$ (e.g. 
+ $0.538$ vs. $0.539$ at $\rho=0.5$ and $0.957$ vs. $0.962$ at
+$\rho=0.95$), sharing essentially the
+same positive bias. Since the real-space Gaussian estimator (Equation~\ref{eq:kernel_estimator}) and 
+the \nufftcf NUFFT-based estimator (Algorithm~\ref{alg:ccf-nufft}, step 10) numerator and denominator
+ are weighted by the same kernel at the level of individual pairs in
+both implementations, the overestimation cannot be attributed to the  NUFFT
+gridding algorithm (Section~\ref{sec:nufft}). It is instead an intrinsic property of the
+\emph{kernel-weighted correlation estimator itself}.
 
+We attribute this to a \emph{selection} (``winner's curse'') bias: the
+reported peak is a maximum, over a dense grid of lags, of a locally noisy
+estimate -- at each lag only the pairs within a few kernel bandwidths
+($\mathrm{bin\_width}=0.5$~d) contribute, given a mean sampling interval of
+$\sim1.7$--$2.5$~d. Scanning many such noisy per-lag estimates and reporting
+the global maximum systematically overestimates the true peak, an effect
+that is largest when $\rho$ is comparable to the per-lag noise level and
+vanishes as $\rho\to1$, since the Pearson correlation is bounded by unity.
+This also explains the $\rho=0.1$ case (excluded from the quantitative
+analysis below), where the true bump at $\tau_0$ is not statistically
+distinguishable from the noise floor and the reported maximum is essentially
+a pure noise fluctuation, located at $\mathrm{lag}=167$ rather than $60$.
+
+To test this hypothesis quantitatively, for $\rho\ge0.2$ and each estimator
+we compare the peak bias $\Delta=\mathrm{peak\_val}-\rho$ to
+$\mathrm{std\_far}$, the standard deviation of the CCF estimate away from the
+peak, over $|\mathrm{lag}-\tau_0|>5\alpha=50$~d
+(Table~\ref{tab:bias_vs_background}), a window chosen so that the
+theoretical CCF (Eq.~\ref{eq:ou_theory_ccf}) has decayed to
+$e^{-5}\approx0.7\%$ of its peak there; with $\mathrm{lags}\in[1,180]$~d this
+leaves $n_\mathrm{far}=79$ lag points. Two features support the
+selection-bias interpretation. First, $\mathrm{std\_far}$ is essentially
+constant across $\rho$ ($\approx0.038$--$0.051$) for all three estimators,
+consistent with a signal-independent noise floor set by sampling and kernel
+bandwidth. Second, $\Delta/\mathrm{std\_far}$ is of order unity at
+weak-to-moderate coupling ($\approx0.9$--$1.2$ at $\rho=0.2$--$0.5$) -- the
+peak bias is comparable to the background noise, exactly as expected when
+selecting the maximum of a noisy curve -- and decreases monotonically as
+$\rho$ grows, down to $\approx0.17$--$0.54$ at $\rho=0.95$, since
+$\mathrm{std\_far}$ stays roughly constant while $\Delta$ itself shrinks
+toward the $\rho\to1$ bound. The rectangular kernel shows the largest
+bias-to-noise ratio at every $\rho$, consistent with its sharper effective
+bandwidth producing a noisier per-lag estimate, while real-space and
+\texttt{nufftcf} Gaussian remain statistically indistinguishable, confirming
+a kernel-choice effect rather than an implementation artifact.
+
+\begin{table*}
+	\centering
+	\caption{Peak bias $\Delta=\mathrm{peak\_val}-\rho$ compared to the
+		background noise level $\mathrm{std\_far}$ (std of the CCF estimate over
+		$|\mathrm{lag}-\tau_0|>50$~d, $n_\mathrm{far}=79$), for $\rho\ge0.2$.}
+	\label{tab:bias_vs_background}
+	\begin{tabular}{l ccc}
+		\toprule
+		$\rho$ / Method & $\Delta$ & $\mathrm{std\_far}$ & $\Delta/\mathrm{std\_far}$ \\
+		\midrule
+		\multicolumn{4}{l}{\textit{$\rho=0.2$}} \\
+		nufftcf gaussian   & 0.0546 & 0.0470 & 1.16 \\
+		nufftcf rectangle  & 0.0576 & 0.0479 & 1.20 \\
+		realspace gaussian & 0.0559 & 0.0508 & 1.10 \\
+		\multicolumn{4}{l}{\textit{$\rho=0.3$}} \\
+		nufftcf gaussian   & 0.0508 & 0.0447 & 1.14 \\
+		nufftcf rectangle  & 0.0551 & 0.0457 & 1.21 \\
+		realspace gaussian & 0.0515 & 0.0482 & 1.07 \\
+		\multicolumn{4}{l}{\textit{$\rho=0.5$}} \\
+		nufftcf gaussian   & 0.0390 & 0.0405 & 0.96 \\
+		nufftcf rectangle  & 0.0457 & 0.0417 & 1.10 \\
+		realspace gaussian & 0.0384 & 0.0435 & 0.88 \\
+		\multicolumn{4}{l}{\textit{$\rho=0.7$}} \\
+		nufftcf gaussian   & 0.0241 & 0.0379 & 0.64 \\
+		nufftcf rectangle  & 0.0332 & 0.0392 & 0.85 \\
+		realspace gaussian & 0.0221 & 0.0403 & 0.55 \\
+		\multicolumn{4}{l}{\textit{$\rho=0.95$}} \\
+		nufftcf gaussian   & 0.0117 & 0.0419 & 0.28 \\
+		nufftcf rectangle  & 0.0231 & 0.0428 & 0.54 \\
+		realspace gaussian & 0.0074 & 0.0438 & 0.17 \\
+		\bottomrule
+	\end{tabular}
+\end{table*}
+
+A natural mitigation, in both implementations, would be to widen the kernel
+bandwidth (reducing per-lag variance at the cost of resolution) or to
+calibrate and subtract the selection bias via a bootstrap/Monte-Carlo
+procedure on surrogate data, analogous to the internal Monte-Carlo
+simulations already used by ZDCF for its own uncertainty estimates.
+
+In summary, the Gaussian- and rectangular-kernel CCF estimators, whether
+evaluated exactly in real space or via NUFFT, systematically overestimate
+the peak amplitude through a selection (``winner's curse'') bias intrinsic
+to the pair-weighted estimator itself, quantitatively consistent with a
+bias of order $\mathrm{std\_far}$ -- while \texttt{pyZDCF} underestimates
+the amplitude and displaces the peak location, both being an unavoidable
+consequence of the equal-population slotting resolution imposed by its own
+algorithm.
+}
+\color{red}
 
 Across both CCF test cases, the key practical difference between the two
 estimators is the same one seen for the ACF: \nufftcf delivers the
@@ -693,11 +754,6 @@ across lags, at the cost of a lag resolution that varies with local pair
 density and is, in all cases studied here, far coarser than the
 per-lag, kernel-weighted estimate \nufftcf evaluates directly at each
 point of a user-chosen lag grid.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Figures
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 
 
