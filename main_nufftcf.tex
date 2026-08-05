@@ -602,18 +602,14 @@ places the peak near $80.9$~d, i.e.\ a constant offset of about $+21$~d.
 This offset is an intrinsic consequence of the equal-population slotting
 algorithm: the reported lag is the mean lag of the pairs contained in the
 highest-correlation bin, not a fixed grid point, and bin edges are set
-purely by pair count rather than by physical lag. 
-{\color{red}
-	 Because the two series are
-sampled on independent irregular grids with unequal retention fractions
-($\sim40\%$ and $\sim60\%$), the pair-density distribution is asymmetric
-around $\tau_0$, so the bin centroid is systematically shifted away from the
-true peak. In other words, \emph{given the sampling imposed by its own
-	slotting scheme}, \pyzdcf is structurally unable to resolve either the true
-peak location or its true height with better precision than the bin width
-itself allows -- this is a resolution limitation of the method, not a
-failure of the specific realization.
-}
+purely by pair count rather than by physical lag. A test done by retaining $50\%$ of both
+series (Equation~\ref{eq:ou_coupling}) shows that \nufftcf recovers the peak location,
+while \pyzdcf increases the deviation by $+78.1$. \pyzdcf
+equal-population slotting can degrade in an essentially uncontrolled way
+once the local pair density near $\tau_0$ (set jointly by \texttt{minpts}, the
+sampling retention fractions, and their overlap structure) becomes
+insufficient to support a bin localized to the true peak neighborhood. We do not undertake further 
+a detailed study of \pyzdcf behavior as we focus ourselves on \nufftcf results. 
 
 The $\rho=0.1$ case is atypical for all estimators: the peak is found at
 $\mathrm{lag}=167$~d (\nufftcf and real-space Gaussian alike) or $178.7$~d
@@ -627,8 +623,8 @@ expected physical peak.
 A systematic, $\rho$-dependent bias is observed: \nufftcf (both kernels) and
 the real-space Gaussian estimator all \emph{overestimate} the peak amplitude
 compared to the true value, with an absolute bias that decreases with
-increasing $\rho$ (e.g., $+0.055$/$+0.058$/$+0.056$ at $\rho=0.2$ versus
-$+0.012$/$+0.023$/$+0.007$ at $\rho=0.95$, for \nufftcf Gaussian and rectangle kernels, and real-space Gaussian respectively). The fact that the exact, 
+increasing $\rho$: e.g., $+0.055$/$+0.058$/$+0.056$ at $\rho=0.2$ versus
+$+0.012$/$+0.023$/$+0.007$ at $\rho=0.95$, for \nufftcf Gaussian and rectangle kernels, and real-space Gaussian respectively. The fact that 
 the real-space evaluation shares essentially the same bias as the \nufftcf 
 NUFFT-based counterpart shows that this overestimation is inherent 
 to the kernel-weighted estimator itself, rather than a NUFFT-specific artifact. 
@@ -644,8 +640,8 @@ direct consequence of slotting, as discussed for the peak location.
 {\color{blue}
 \paragraph{\bf On the systematic overestimation by the Gaussian- and
 	rectangular-kernel estimators.}
-The real-space Gaussian-kernel peak amplitude 
-tracks the \texttt{nufftcf} Gaussian-kernel result closely at every $\rho$ (e.g. 
+The real-space Gaussian-kernel
+and the \texttt{nufftcf} Gaussian-kernel results agree quite well at every $\rho$ (e.g. 
  $0.538$ vs. $0.539$ at $\rho=0.5$ and $0.957$ vs. $0.962$ at
 $\rho=0.95$), sharing essentially the
 same positive bias. Since the real-space Gaussian estimator (Equation~\ref{eq:kernel_estimator}) and 
@@ -653,77 +649,71 @@ the \nufftcf NUFFT-based estimator (Algorithm~\ref{alg:ccf-nufft}, step 10) nume
  are weighted by the same kernel at the level of individual pairs in
 both implementations, the overestimation cannot be attributed to the  NUFFT
 gridding algorithm (Section~\ref{sec:nufft}). It is instead an intrinsic property of the
-\emph{kernel-weighted correlation estimator itself}.
+kernel-weighted correlation estimator itself.
 
-We attribute this to a \emph{selection} (``winner's curse'') bias: the
+We attribute this to a \emph{selection} bias: the
 reported peak is a maximum, over a dense grid of lags, of a locally noisy
 estimate -- at each lag only the pairs within a few kernel bandwidths
 ($\mathrm{bin\_width}=0.5$~d) contribute, given a mean sampling interval of
 $\sim1.7$--$2.5$~d. Scanning many such noisy per-lag estimates and reporting
 the global maximum systematically overestimates the true peak, an effect
 that is largest when $\rho$ is comparable to the per-lag noise level and
-vanishes as $\rho\to1$, since the Pearson correlation is bounded by unity.
+vanishes as $\rho$ tends to $1$, since the Pearson correlation is bounded by unity.
 This also explains the $\rho=0.1$ case (excluded from the quantitative
 analysis below), where the true bump at $\tau_0$ is not statistically
 distinguishable from the noise floor and the reported maximum is essentially
 a pure noise fluctuation, located at $\mathrm{lag}=167$ rather than $60$.
-
-To test this hypothesis quantitatively, for $\rho\ge0.2$ and each estimator
-we compare the peak bias $\Delta=\mathrm{peak\_val}-\rho$ to
-$\mathrm{std\_far}$, the standard deviation of the CCF estimate away from the
-peak, over $|\mathrm{lag}-\tau_0|>5\alpha=50$~d
-(Table~\ref{tab:bias_vs_background}), a window chosen so that the
-theoretical CCF (Eq.~\ref{eq:ou_theory_ccf}) has decayed to
-$e^{-5}\approx0.7\%$ of its peak there; with $\mathrm{lags}\in[1,180]$~d this
-leaves $n_\mathrm{far}=79$ lag points. Two features support the
-selection-bias interpretation. First, $\mathrm{std\_far}$ is essentially
-constant across $\rho$ ($\approx0.038$--$0.051$) for all three estimators,
-consistent with a signal-independent noise floor set by sampling and kernel
-bandwidth. Second, $\Delta/\mathrm{std\_far}$ is of order unity at
-weak-to-moderate coupling ($\approx0.9$--$1.2$ at $\rho=0.2$--$0.5$) -- the
-peak bias is comparable to the background noise, exactly as expected when
-selecting the maximum of a noisy curve -- and decreases monotonically as
-$\rho$ grows, down to $\approx0.17$--$0.54$ at $\rho=0.95$, since
-$\mathrm{std\_far}$ stays roughly constant while $\Delta$ itself shrinks
-toward the $\rho\to1$ bound. The rectangular kernel shows the largest
-bias-to-noise ratio at every $\rho$, consistent with its sharper effective
-bandwidth producing a noisier per-lag estimate, while real-space and
-\texttt{nufftcf} Gaussian remain statistically indistinguishable, confirming
-a kernel-choice effect rather than an implementation artifact.
-
+%
 \begin{table*}
 	\centering
 	\caption{Peak bias $\Delta=\mathrm{peak\_val}-\rho$ compared to the
 		background noise level $\mathrm{std\_far}$ (std of the CCF estimate over
 		$|\mathrm{lag}-\tau_0|>50$~d, $n_\mathrm{far}=79$), for $\rho\ge0.2$.}
 	\label{tab:bias_vs_background}
-	\begin{tabular}{l ccc}
-		\toprule
-		$\rho$ / Method & $\Delta$ & $\mathrm{std\_far}$ & $\Delta/\mathrm{std\_far}$ \\
-		\midrule
-		\multicolumn{4}{l}{\textit{$\rho=0.2$}} \\
-		nufftcf gaussian   & 0.0546 & 0.0470 & 1.16 \\
-		nufftcf rectangle  & 0.0576 & 0.0479 & 1.20 \\
-		realspace gaussian & 0.0559 & 0.0508 & 1.10 \\
-		\multicolumn{4}{l}{\textit{$\rho=0.3$}} \\
-		nufftcf gaussian   & 0.0508 & 0.0447 & 1.14 \\
-		nufftcf rectangle  & 0.0551 & 0.0457 & 1.21 \\
-		realspace gaussian & 0.0515 & 0.0482 & 1.07 \\
-		\multicolumn{4}{l}{\textit{$\rho=0.5$}} \\
-		nufftcf gaussian   & 0.0390 & 0.0405 & 0.96 \\
-		nufftcf rectangle  & 0.0457 & 0.0417 & 1.10 \\
-		realspace gaussian & 0.0384 & 0.0435 & 0.88 \\
-		\multicolumn{4}{l}{\textit{$\rho=0.7$}} \\
-		nufftcf gaussian   & 0.0241 & 0.0379 & 0.64 \\
-		nufftcf rectangle  & 0.0332 & 0.0392 & 0.85 \\
-		realspace gaussian & 0.0221 & 0.0403 & 0.55 \\
-		\multicolumn{4}{l}{\textit{$\rho=0.95$}} \\
-		nufftcf gaussian   & 0.0117 & 0.0419 & 0.28 \\
-		nufftcf rectangle  & 0.0231 & 0.0428 & 0.54 \\
-		realspace gaussian & 0.0074 & 0.0438 & 0.17 \\
-		\bottomrule
-	\end{tabular}
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{l ccc ccc ccc ccc ccc}
+			\toprule
+			& \multicolumn{3}{c}{$\rho=0.2$} & \multicolumn{3}{c}{$\rho=0.3$} & \multicolumn{3}{c}{$\rho=0.5$} & \multicolumn{3}{c}{$\rho=0.7$} & \multicolumn{3}{c}{$\rho=0.95$} \\
+			\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}\cmidrule(lr){11-13}\cmidrule(lr){14-16}
+			Method & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio \\
+			\midrule
+			nufftcf gaussian   & 0.055 & 0.047 & 1.16 & 0.051 & 0.045 & 1.14 & 0.039 & 0.041 & 0.96 & 0.024 & 0.038 & 0.64 & 0.012 & 0.042 & 0.28 \\
+			nufftcf rectangle  & 0.058 & 0.048 & 1.20 & 0.055 & 0.046 & 1.21 & 0.046 & 0.042 & 1.10 & 0.033 & 0.039 & 0.85 & 0.023 & 0.043 & 0.54 \\
+			realspace gaussian & 0.056 & 0.051 & 1.10 & 0.052 & 0.048 & 1.07 & 0.038 & 0.044 & 0.88 & 0.022 & 0.040 & 0.55 & 0.007 & 0.044 & 0.17 \\
+			\bottomrule
+	\end{tabular}}
 \end{table*}
+
+To test this hypothesis quantitatively, for $\rho\ge0.2$ and each estimator
+we compare on Table~\ref{tab:bias_vs_background} the peak bias 
+$$\Delta=\mathrm{peak\ val.}-\rho$$ 
+to $\mathrm{std\_far}$ the standard deviation of the CCF estimate away from the
+peak defined as
+$$
+\mathrm{std\_far} = \mathrm{std}\Bigl( CCF(\mathrm{lag}) \mid |\mathrm{lag} - \tau_0| > 5\alpha = 50~\mathrm{d} \Bigr)
+$$
+The lag window is chosen so that the
+theoretical CCF (Equation~\ref{eq:ou_theory_ccf}) has decayed to
+$e^{-5}\approx0.7\%$ of its peak value there. With $\mathrm{lags}\in[1,180]$~d this
+leaves $n_\mathrm{far}=79$ lag points. Two features support the
+selection bias interpretation. 
+
+First, $\mathrm{std\_far}$ is essentially
+constant across $\rho$ ($\approx0.038$--$0.051$) for all three estimators,
+consistent with a signal-independent noise floor set by sampling and kernel
+bandwidth. 
+
+Second, $\Delta/\mathrm{std\_far}$ is of order unity at
+weak-to-moderate coupling ($\approx0.9$--$1.2$ at $\rho=0.2$--$0.5$) -- the
+peak bias is comparable to the background noise, exactly as expected when
+selecting the maximum of a noisy curve -- and decreases monotonically as
+$\rho$ grows, down to $\approx0.17$--$0.54$ at $\rho=0.95$, since
+$\mathrm{std\_far}$ stays roughly constant while $\Delta$ itself shrinks
+toward the $\rho=1$ bound. The rectangular kernel shows the largest
+bias-to-noise ratio at every $\rho$, consistent with its sharper effective
+bandwidth producing a noisier per-lag estimate, while real-space and
+\texttt{nufftcf} Gaussian remain statistically indistinguishable, confirming
+a kernel-choice effect rather than an implementation artifact.
 
 A natural mitigation, in both implementations, would be to widen the kernel
 bandwidth (reducing per-lag variance at the cost of resolution) or to
