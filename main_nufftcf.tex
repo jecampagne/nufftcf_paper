@@ -68,7 +68,7 @@ definitions, while scaling as $O(n\log n)$ rather than $O(n^2)$.
 \nufftcf evaluates the Wiener--Khinchin theorem for irregularly
 sampled data using the Non-Uniform Fast Fourier Transform (NUFFT), via the
 Flatiron Institute's \texttt{FINUFFT} library, and using the
-Gaussian- and rectangular-kernel estimators. An $O(n)$ two-pointer scan replaces the naive
+Gaussian- and rectangle-kernel estimators. An $O(n)$ two-pointer scan replaces the naive
 $O(n^2)$ computation of the effective pair count that normalizes each lag
 bin. Direct, real-space implementations of the same estimators, and
 dedicated classical-FFT estimators for regularly-sampled data, are
@@ -162,7 +162,7 @@ without altering downstream analysis code.
 
 The development of \nufftcf yields the following contributions:
 \begin{enumerate}
-    \item We demonstrate that the Gaussian- and rectangular-kernel ACF/CCF estimators---previously established on statistical grounds \citep{Rehfeld2011}---can be reformulated as a pair of Non-Uniform Fast Fourier Transform (NUFFT) evaluations. This reformulation ensures numerical consistency with existing definitions while achieving an $O(n \log n)$ computational complexity.
+    \item We demonstrate that the Gaussian- and rectangle-kernel ACF/CCF estimators---previously established on statistical grounds \citep{Rehfeld2011}---can be reformulated as a pair of Non-Uniform Fast Fourier Transform (NUFFT) evaluations. This reformulation ensures numerical consistency with existing definitions while achieving an $O(n \log n)$ computational complexity.
     \item We introduce an $O(n)$ analytical algorithm, based on a two-pointer scan, to compute the effective pair count for normalizing each lag bin. This replaces the naive $O(n^2)$ all-pairs approach, significantly improving efficiency.
     \item We validate \nufftcf through comparisons with \pastas \citep{collenteur2019} and \pyzdcf \citep{jankov2022pyzdcf} on synthetic ACF and CCF problems, and quantify the resulting speed-up.
 \end{enumerate}
@@ -217,7 +217,7 @@ A refinement of the DCF, proposed by \cite{alexander1997} (ZDCF-transform), addr
 \subsection{Kernel-weighted estimators}
 \label{sec:kernel_estimators}
 %
-Kernel-weighted estimators replace the hard bin assignment of slotting with a smooth weighting function (kernel) of the time-lag separation. This allows pairs to contribute to a lag estimate in proportion to the proximity of their separation to that lag. In this context, \cite{Stoica2009} proposed a $\sinc$ kernel, while \cite{bjornstad2001} introduced a Gaussian kernel. Notably, the slotting technique of \cite{edelson1988} can be interpreted as a rectangular (or box) kernel.
+Kernel-weighted estimators replace the hard bin assignment of slotting with a smooth weighting function (kernel) of the time-lag separation. This allows pairs to contribute to a lag estimate in proportion to the proximity of their separation to that lag. In this context, \cite{Stoica2009} proposed a $\sinc$ kernel, while \cite{bjornstad2001} introduced a Gaussian kernel. Notably, the slotting technique of \cite{edelson1988} can be interpreted as a rectangle (or box) kernel.
 
 The kernel-weighted cross-correlation estimator is defined as:
 \begin{equation}
@@ -241,10 +241,10 @@ b_k(d) = \frac{1}{\sqrt{2\pi}\,h}\exp\left(-\frac{d^2}{2h^2}\right).
 \end{equation}
 Here, $h$ is a bandwidth parameter typically set to match the mean sampling interval $\Delta t^{xy}$ (e.g., $h = \Delta t^{xy}/2$ for the rectangle kernel, $h = \Delta t^{xy}/4$ for the Gaussian kernel; see \citep{Rehfeld2011} for details). 
 
-Given the irregular sampling common in geoscientific time series, \cite{Rehfeld2011} conducted a systematic benchmark of kernel-based estimators (Gaussian, $\sinc$, rectangular) against linear interpolation and the Lomb--Scargle approach. Using synthetic sinusoidal and autoregressive processes with controlled sampling irregularity, they found that the Gaussian-kernel estimator consistently exhibited the lowest, or close to the lowest, root-mean-square error and bias across nearly all test cases. This led the authors to recommend it over linear interpolation for irregularly sampled data.
+Given the irregular sampling common in geoscientific time series, \cite{Rehfeld2011} conducted a systematic benchmark of kernel-based estimators (Gaussian, $\sinc$, rectangle) against linear interpolation and the Lomb--Scargle approach. Using synthetic sinusoidal and autoregressive processes with controlled sampling irregularity, they found that the Gaussian-kernel estimator consistently exhibited the lowest, or close to the lowest, root-mean-square error and bias across nearly all test cases. This led the authors to recommend it over linear interpolation for irregularly sampled data.
 
 
-This methodology underpins the ACF estimator implemented in \pastas \citep{collenteur2019}, a widely used Python package for groundwater time-series analysis. \pastas offers Gaussian, rectangular, and regular-grid binning options for its ACF. As with slotting, kernel-weighted estimators evaluate a direct pairwise sum, with an overall cost of $O(n^2)$ for a full lag range (or $O(n)$ per individual lag).
+This methodology underpins the ACF estimator implemented in \pastas \citep{collenteur2019}, a widely used Python package for groundwater time-series analysis. \pastas offers Gaussian, rectangle, and regular-grid binning options for its ACF. As with slotting, kernel-weighted estimators evaluate a direct pairwise sum, with an overall cost of $O(n^2)$ for a full lag range (or $O(n)$ per individual lag).
 %
 \subsection{Lomb--Scargle-based (Fourier-domain) estimation}
 \label{sec:lombscargle}
@@ -301,7 +301,7 @@ estimator of Equation~\ref{eq:kernel_estimator} can be evaluated via
 Wiener--Khinchin using a NUFFT, rather than via a direct pairwise sum,
 whenever the weighting kernel $b_k(\cdot)$ is itself expressible as (or well
 approximated by) a smooth, compactly supported function of the
-lag---which the Gaussian and rectangular kernels used by \pastas
+lag---which the Gaussian and rectangle kernels used by \pastas
 are. Concretely, \nufftcf:
 \begin{enumerate}
     \item forms the (irregularly sampled) power or cross-spectrum of the
@@ -448,7 +448,7 @@ without access to \pastas:
 \end{itemize}
 
 \textbf{Software configuration.} For \nufftcf we evaluate both the
-rectangular  and  Gaussian kernels (Equations~\ref{eq:rectangle_kernel}, \ref{eq:gaussian_kernel}) via the NUFFT-based estimator (and, for the
+rectangle  and  Gaussian kernels (Equations~\ref{eq:rectangle_kernel}, \ref{eq:gaussian_kernel}) via the NUFFT-based estimator (and, for the
 fiducial CCF case, the direct real-space evaluation as an accuracy
 cross-check), using \texttt{bin\_width}$=0.5$~d as the kernel-bandwidth
 control parameter for all ACF and CCF runs, and evaluating every
@@ -471,7 +471,7 @@ the ACF runs, with asymmetric Monte-Carlo error bars from $50$
 Figures~\ref{fig:pastas_sin}--\ref{fig:pastas_exp} compare \nufftcf and
 \pastas on the \texttt{STS\_SIN} and \texttt{STS\_EXP} series, respectively, showing the estimated
 ACF together with the residual to the analytical truth for both the
-Gaussian and rectangular kernels. Across all six series the two
+Gaussian and rectangle kernels. Across all six series the two
 implementations are visually indistinguishable and their Root Mean Square Error (RMSE) against
 the analytical ACF agree to within the reported precision (e.g. $\mathrm{RMSE}=0.03/0.05/0.04$
 for \texttt{STS\_SIN}1/2/3 and $\mathrm{RMSE}=0.08/0.11/0.07$ for \texttt{STS\_EXP}1/2/3, 
@@ -492,7 +492,7 @@ than of either estimator.
 	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_sin_acf.pdf}
 	\caption{ACF of the\texttt{STS\_SIN}1--3 series: signal (top row), \pastas
 		vs.\ \nufftcf Gaussian-kernel ACF against the analytical truth
-		(second row), and residuals for the Gaussian and rectangular kernels
+		(second row), and residuals for the Gaussian and rectangle kernels
 		(third and fourth rows), with matching RMSE values for both
 		estimators in every panel.}
 	\label{fig:pastas_sin}
@@ -513,7 +513,7 @@ than of either estimator.
 	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_sin_acf.pdf}
 	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_exp_acf.pdf}
 	\caption{Top: ACF of the \texttt{STS\_SIN}1--3 series: signal (top row) and ACF
-		(bottom row), comparing \nufftcf (Gaussian and rectangular kernels,
+		(bottom row), comparing \nufftcf (Gaussian and rectangle kernels,
 		with per-series computation time) to \pyzdcf (\texttt{minpts}=11
 		and 25, with number of returned bins and computation time) and to
 		the analytical truth. Bottom: Same for the \texttt{STS\_EXP}11--3
@@ -521,12 +521,12 @@ than of either estimator.
 	\label{fig:zdcf_sin_exp}
 \end{figure*}
 
-Figure~\ref{fig:zdcf_sin_exp} repeats the comparison against \texttt{pyzdcf}. The \texttt{nufftcf} Gaussian and rectangular estimates, which closely follow the analytical ACF, agree with the \texttt{pyzdcf} points (within their Monte-Carlo error bars) wherever the two methods are directly comparable. The main qualitative differences are in resolution and computational cost: \texttt{nufftcf} returns a value at every requested lag for these series (e.g., $365$ points) in at most a few hundred milliseconds, whereas \texttt{pyzdcf} returns only $\sim 300$--$500$ equal-population bins (even fewer for the coarser $\mathrm{minpts}=25$ setting) and requires several seconds per series. These timing differences are driven by \texttt{pyzdcf} $O(n^2)$ pairwise scan and Monte Carlo error resampling, compared to \texttt{nufftcf} $O(n \log n)$ NUFFT evaluation.
+Figure~\ref{fig:zdcf_sin_exp} repeats the comparison against \texttt{pyzdcf}. The \texttt{nufftcf} Gaussian and rectangle estimates, which closely follow the analytical ACF, agree with the \texttt{pyzdcf} points (within their Monte-Carlo error bars) wherever the two methods are directly comparable. The main qualitative differences are in resolution and computational cost: \texttt{nufftcf} returns a value at every requested lag for these series (e.g., $365$ points) in at most a few hundred milliseconds, whereas \texttt{pyzdcf} returns only $\sim 300$--$500$ equal-population bins (even fewer for the coarser $\mathrm{minpts}=25$ setting) and requires several seconds per series. These timing differences are driven by \texttt{pyzdcf} $O(n^2)$ pairwise scan and Monte Carlo error resampling, compared to \texttt{nufftcf} $O(n \log n)$ NUFFT evaluation.
 %
 \subsection{Cross-correlation: nufftcf vs pyZDCF\\ (\texttt{STS\_SIN/EXP} series)}
 \label{sec:comparison_ccf}
 %
-Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp case for the \texttt{STS\_SIN} and \texttt{STS\_EXP} series, respectively. The \nufftcf Gaussian-kernel estimate is compared against its real-space reference (left panels) and its rectangular-kernel estimate (right panels). In both panels, the \pyzdcf estimate is also displayed. The three \nufftcf variants agree essentially exactly with one another, and all three also agree with the \pyzdcf sparser set of binned points within its error bars. Additionally, they correctly locate the CCF peak at the injected delay $\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak recovery is robust as $\tau_0$ is varied over $\{20, 60, 120\}$~d, exemplified for the \texttt{STS\_EXP} series: both \nufftcf and \pyzdcf recover peaks consistent with the true delay (marked by the vertical dashed line), with the \nufftcf continuous curve making the peak location and shape considerably easier to read off than the \pyzdcf handful of bins per panel.
+Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp case for the \texttt{STS\_SIN} and \texttt{STS\_EXP} series, respectively. The \nufftcf Gaussian-kernel estimate is compared against its real-space reference (left panels) and its rectangle-kernel estimate (right panels). In both panels, the \pyzdcf estimate is also displayed. The three \nufftcf variants agree essentially exactly with one another, and all three also agree with the \pyzdcf sparser set of binned points within its error bars. Additionally, they correctly locate the CCF peak at the injected delay $\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak recovery is robust as $\tau_0$ is varied over $\{20, 60, 120\}$~d, exemplified for the \texttt{STS\_EXP} series: both \nufftcf and \pyzdcf recover peaks consistent with the true delay (marked by the vertical dashed line), with the \nufftcf continuous curve making the peak location and shape considerably easier to read off than the \pyzdcf handful of bins per panel.
 
 
 \begin{figure*}
@@ -535,7 +535,7 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_ccf.pdf}
 	\caption{Top: CCF of the shifted-timestamp  \texttt{STS\_SIN} test
 		($\tau_0=60$~d): \nufftcf Gaussian vs. its own real-space reference
-		(left) and vs. its rectangular kernel (right), both compared to
+		(left) and vs. its rectangle kernel (right), both compared to
 		\pyzdcf. Bottom: Same legend for the shifted-timestamp
 		\texttt{STS\_EXP} test.}
 	\label{fig:ccf_sin_exp}
@@ -557,7 +557,7 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 	\caption{CCF of the coupled Ornstein--Uhlenbeck processes of
 		Equation~\ref{eq:ou_coupling} ($\tau_0=60$~d, $\alpha=10$~d), for
 		coupling strengths $\rho=0.1,0.4,0.7,0.95$: \nufftcf (Gaussian and
-		rectangular kernels) and \pyzdcf against the analytical CCF of
+		rectangle kernels) and \pyzdcf against the analytical CCF of
 		Equation~\ref{eq:ou_theory_ccf}.}
 	\label{fig:ccf_ou}
 \end{figure*}
@@ -631,7 +631,7 @@ $+0.012$/$+0.023$/$+0.007$ at $\rho=0.95$, for \nufftcf Gaussian and rectangle k
 the real-space evaluation shares essentially the same bias as the \nufftcf 
 NUFFT-based counterpart shows that this overestimation is inherent 
 to the kernel-weighted estimator itself, rather than a NUFFT-specific artifact. 
-We discuss this in more detail below. Note that the rectangular kernel consistently
+We discuss this in more detail below. Note that the rectangle kernel consistently
 produces a slightly higher peak amplitude than the Gaussian kernel
 estimator, as the latter smooths more strongly over the peak neighborhood.
 
@@ -712,7 +712,7 @@ peak bias is comparable to the background noise, exactly as expected when
 selecting the maximum of a noisy curve -- and decreases monotonically as
 $\rho$ grows, down to $\approx0.17$--$0.54$ at $\rho=0.95$, since
 $\mathrm{std\_far}$ stays roughly constant while $\Delta$ itself shrinks
-toward the $\rho=1$ bound. The rectangular kernel shows the largest
+toward the $\rho=1$ bound. The rectangle kernel shows the largest
 bias-to-noise ratio at every $\rho$, consistent with its sharper effective
 bandwidth producing a noisier per-lag estimate, while real-space and
 \texttt{nufftcf} Gaussian remain statistically indistinguishable, confirming
@@ -938,7 +938,7 @@ The three estimator families provided by \nufftcf share a single calling convent
 made per use case. For
 \emph{regularly-sampled} data, the dedicated classic-FFT 
 (Section~\ref{sec:benchmarks}) should always be preferred: it reproduces
-the same Gaussian/rectangular kernel definitions at the lowest cost, with
+the same Gaussian/rectangle kernel definitions at the lowest cost, with
 no NUFFT-specific approximation. For \emph{irregularly-sampled} data---the
 intended use case for \nufftcf---the NUFFT estimator is the default
 choice, since it retains the $O(n\log n)$ scaling advantage over
@@ -976,7 +976,7 @@ user wanting formal error bars must still obtain externally (e.g., by bootstrap)
 \label{sec:conclusion}
 %
 We have presented \nufftcf, an open-source Python package that
-evaluates the Gaussian- and rectangular-kernel ACF/CCF estimators of
+evaluates the Gaussian- and rectangle-kernel ACF/CCF estimators of
 Section~\ref{sec:kernel_estimators} through the Wiener--Khinchin theorem
 using the Non-Uniform FFT from \texttt{FINUFFT} library, reducing their cost from $O(n^2)$ to
 $O(n\log n)$ while remaining numerically consistent with their
@@ -1046,66 +1046,60 @@ We thank the developers of \texttt{FINUFFT}, \pastas, and
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-\color{red}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{NUFFT-based ACF/CCF algorithms}
 \label{app:algorithms}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-This appendix gives the complete pseudocode underlying the
-NUFFT-based estimators sketched in Section~\ref{sec:nufftcf_approach}
-(\texttt{nufft\_ccf.py} and \texttt{nufft\_acf.py}), evaluating the
-Wiener--Khinchin identity of Equation~\ref{eq:wienerkhinchin} through a
-type~1 NUFFT (nonuniform samples $\to$ uniform frequency grid) followed
-by a type~2 NUFFT (uniform frequency grid $\to$ requested lags). Both
-weighting kernels supported by \nufftcf (Gaussian, rectangular; see
+This appendix provides the complete pseudocode for the
+NUFFT-based estimators implemented using the \texttt{FINUFFT} library,
+ as outlined in Section~\ref{sec:nufftcf_approach}
+(\texttt{nufft\_ccf.py} and \texttt{nufft\_acf.py}). These estimators evaluate the
+Wiener--Khinchin identity of Equation~\ref{eq:wienerkhinchin} via a
+type~1 NUFFT (from nonuniform samples to uniform frequency grid) followed
+by a type~2 NUFFT (from uniform frequency grid to requested lags). Both
+weighting kernels supported by \nufftcf (Gaussian and rectangle; see
 Equations~\ref{eq:rectangle_kernel}--\ref{eq:gaussian_kernel}) share
-the same algorithmic structure and differ only in the smoothing
+the same algorithmic structure.  They differ only in the smoothing
 operator $\mathcal{S}_h$ (Gaussian filter of width $h$, or box filter
 of size $\mathrm{round}(2h)$) applied to the raw NUFFT output, and in
-the matching pair-count function $b(\cdot)$ from
-Appendix~\ref{app:pair-count}. We therefore present each estimator as
-a single, kernel-parameterized algorithm rather than duplicating it for
-each kernel.
+the corresponding pair-count function $b(\cdot)$ from
+Appendix~\ref{app:pair-count}. Thus, each estimator is presented as a single, 
+kernel-parameterized algorithm to avoid redundancy.
 %
 \subsection{Cross and Autocorrelation functions}
 %
-Algorithm~\ref{alg:ccf-nufft} gives the general NUFFT-based CCF
-estimator: it evaluates the Wiener--Khinchin identity through a
-type~1 NUFFT on each series, forms the cross-spectrum
-$\hat X^\ast(f)\hat Y(f)$, evaluates it at the requested lags by a
-type~2 NUFFT, smooths the result with the chosen kernel
-$\mathcal{S}_h$, and normalizes it to a Pearson correlation in
-$[-1,1]$ by the matching effective pair count (Algorithm~\ref{alg:b-generic})
-and by the geometric mean of the two series' ACF values at lag $0$,
-$\sqrt{\mathrm{ACF}_x(0)\cdot\mathrm{ACF}_y(0)}$, each obtained from
-Algorithm~\ref{alg:acf-scale0}.
+Algorithm~\ref{alg:ccf-nufft}describes the general NUFFT-based CCF estimator.
+It evaluates the Wiener--Khinchin identity by applying a type~1 NUFFT to each series,
+computes the cross-spectrum $\hat X^\ast(f)\hat Y(f)$,
+evaluates it at the requested lags using a type~2 NUFFT,
+smooths the result with the chosen kernel $\mathcal{S}_h$,
+and normalizes it to a Pearson correlation in $[-1,1]$.
+This normalization uses the matching effective pair count (Algorithm~\ref{alg:b-generic})
+and the geometric mean of the two series' ACF values at lag $0$,
+$\sqrt{\mathrm{ACF}_x(0)\cdot\mathrm{ACF}_y(0)}$,
+each obtained from Algorithm~\ref{alg:acf-scale0}.
 
-The ACF (Algorithm~\ref{alg:acf-nufft}) is the special case $s=t$,
-$y=x$ of this same estimator, and reduces to a slightly simpler
-procedure on three points. First, since a single series is involved,
-the power spectrum $|\hat X(f)|^2$ is real and even (Hermitian), so
-only one type~1 NUFFT call is needed and the $\pm i$ sign convention
-that must be fixed carefully for the CCF cross-spectrum plays no role
-here. Second, the effective pair count reduces to
-Algorithm~\ref{alg:b-generic} evaluated with $s=t$. Third, the
-normalization is simpler: rather than the geometric mean of two scales
-$\mathrm{ACF}_x(0)\cdot\mathrm{ACF}_y(0)$ computed separately
-(Algorithm~\ref{alg:acf-scale0}), the ACF estimate is normalized
-directly by the smoothed value at lag $0$, obtained as the first entry
-of the same evaluation array --- the interior-position trick of
-Algorithm~\ref{alg:acf-scale0} is unnecessary here because the ACF is
-even about $\tau=0$.
+The ACF (Algorithm~\ref{alg:acf-nufft}) is a special case of this estimator where $s=t$ and $y=x$.
+	This simplifies the procedure in three ways.
+First, since only one series is involved, the power spectrum $|\hat X(f)|^2$ is real and even,
+so only one type~1 NUFFT call is required.
+The $\pm i$ sign convention, which must be carefully fixed for the CCF cross-spectrum, is irrelevant here.
+Second, the effective pair count reduces to Algorithm~\ref{alg:b-generic} evaluated with $s=t$.
+Third, normalization is simpler: instead of computing the geometric mean of two scales
+$\mathrm{ACF}_x(0)\cdot\mathrm{ACF}_y(0)$ separately (Algorithm~\ref{alg:acf-scale0}),
+the ACF estimate is normalized directly by the smoothed value at lag $0$,
+obtained as the first entry of the same evaluation array.
+The interior-position trick of Algorithm~\ref{alg:acf-scale0} is unnecessary here because the ACF is even about $\tau=0$.
 
 \begin{algorithm*}
 	\small
-	\caption{CCF via NUFFT + smoothing (Gaussian or rectangular)}
+	\caption{CCF via NUFFT + smoothing (Gaussian or rectangle)}
 	\label{alg:ccf-nufft}
 	\Require{times $t=(t^x_i)_{i=1}^{n_x}$, values $x=(x_i)$ (series 1,
 		$t$ ascending); times $s=(t^y_j)_{j=1}^{n_y}$, values $y=(y_j)$
 		(series 2, $s$ ascending); requested lags $\{\tau_1,\dots,\tau_K\}$;
 		kernel filter $S_h$ with bandwidth $h$ ($\sigma$ for the Gaussian kernel, half-width for
-		the rectangular kernel); NUFFT tolerance $\varepsilon$; frequency-grid
+		the rectangle kernel); NUFFT tolerance $\varepsilon$; frequency-grid
 		size $N_1$ (default $32\max(n_x,n_y)$)}
 	\Ensure{$c=(c_1,\dots,c_K)$ (CCF estimate, normalized to $[-1,1]$), $b=(b_1,\dots,b_K)$ (effective pair count)}
 	$x_{\mathrm{std}} \gets (x-\bar x)/\mathrm{std}(x)$, \quad $y_{\mathrm{std}} \gets (y-\bar y)/\mathrm{std}(y)$ \tcp*{standardize both series}
@@ -1117,7 +1111,7 @@ even about $\tau=0$.
 	$\hat F_2 \gets \textsc{nufft1d1}(\tilde s, y_{\mathrm{std}}, N_1,\varepsilon)$\;
 	$M \gets \overline{\hat F_1}\odot \hat F_2$ \tcp*{cross-spectrum $\hat X^\ast(f)\hat Y(f)$, not Hermitian in general}
 	$c_{\mathrm{raw}} \gets \Re\big[\textsc{nufft1d2}(\tilde\tau, M,\varepsilon)\big]$ \tcp*{type~2: frequency $\to$ lags}
-	$c_{\mathrm{sm}} \gets \mathcal{S}_h(c_{\mathrm{raw}})$ \tcp*{Gaussian or rectangular filtering}
+	$c_{\mathrm{sm}} \gets \mathcal{S}_h(c_{\mathrm{raw}})$ \tcp*{Gaussian or rectangle filtering}
 	$b_{\mathrm{cross}} \gets \textsc{PairCount}(t,s,(0,\tau_1,\dots,\tau_K),h)$ \tcp*{Alg.~\ref{alg:b-generic}, matching kernel}
 	$c_{\mathrm{norm}} \gets c_{\mathrm{sm}} \oslash b_{\mathrm{cross}}$ \tcp*{elementwise division}
 	$\mathrm{scale}_x \gets \textsc{AcfScaleAtLag0}(t,x_{\mathrm{std}},t_{\min},\mathrm{span},N_1,\varepsilon,h)$ \tcp*{Alg.~\ref{alg:acf-scale0}}
@@ -1148,7 +1142,7 @@ even about $\tau=0$.
 
 \begin{algorithm*}
 	\small
-	\caption{ACF via NUFFT + smoothing (Gaussian or rectangular)}
+	\caption{ACF via NUFFT + smoothing (Gaussian or rectangle)}
 	\label{alg:acf-nufft}
 	\Require{times $t$, values $x$; lags $\{\tau_1,\dots,\tau_K\}$; bandwidth $h$; $\varepsilon$; $N_1$ (default $32\,n$)}
 	\Ensure{$c=(c_1,\dots,c_K)$, $b=(b_1,\dots,b_K)$}
@@ -1167,73 +1161,74 @@ even about $\tau=0$.
 \end{algorithm*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\color{blue}
 \subsection{Effective pair count algorithms}
 \label{app:pair-count}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The pair-count functions $b(\cdot)$ (module \texttt{kernels.py}) compute
-the \textit{effective} number of pairs contributing to each lag --- the
-normalization denominator of Equation~\ref{eq:kernel_estimator}. They
-are implemented in \texttt{numba} using a two-pointer scan: because $t$
-(and $s$) are sorted ascending, the window $[\mathrm{lo},\mathrm{hi})$
-associated with the pair-matching center advances monotonically as the
-outer index increases, reducing the cost from $O(n^2)$ to $O(n)$ per
-lag, and to $O(n\log n)$ overall once parallelized (\texttt{prange})
-across lags.
+The pair-count functions $b(\cdot)$ (module \texttt{kernels.py}) are
+presented in Algorithms~\ref{alg:b-generic}-\ref{alg:b-rect-generic}. Each
+algorithm computes the \textit{effective} number of pairs contributing
+to each lag --- the normalization denominator in
+Equation~\ref{eq:kernel_estimator}. They are implemented in
+\texttt{numba} using a two-pointer scan: since both time arrays are
+sorted in ascending order, the window $[\mathrm{lo},\mathrm{hi})$ associated
+with the pair-matching center advances monotonically as the outer
+index increases. This reduces the computational cost from $O(n_1 n_2)$ to
+$O(n_1+n_2)$ per lag, and to an overall $O((n_1+n_2)\log n_1)$-equivalent
+throughput when parallelized (\texttt{prange}) across lags.
 
-We give the \textit{cross} (CCF) version below, which reduces to the
-ACF case by setting $s=t$ --- exactly the relationship between
-\texttt{compute\_b\_gaussian\_cross}/\texttt{compute\_b\_rectangle\_cross}
-and \texttt{compute\_b\_gaussian}/\texttt{compute\_b\_rectangle} in the
-code.
+The ACF and CCF pair-counts are \emph{not} separate algorithms but two
+instantiations of the same two-pointer scan, differing only in the role of the time arrays and the sign $\epsilon\in\{+1,-1\}$ in the window-center formula $c_j = t^{(1)}_j + \epsilon\,\tau_k$. For the ACF ($t^{(1)}=t^{(2)}=t$, $\epsilon=+1$), the window center is $c_j = t_j+\tau_k$ with pair condition $t_i-t_j\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian} and \texttt{compute\_b\_rectangle}. For the CCF ($t^{(1)}=s=t^y$, $t^{(2)}=t=t^x$, $\epsilon=-1$), the window center is $c_j = s_j-\tau_k$ with pair condition $s_j-t_i\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian\_cross} and \texttt{compute\_b\_rectangle\_cross}. 
+
+The sign flip encodes the asymmetry of the CCF (lag $+\tau$ means $y$ lags $x$ by $\tau$; cf. the sign-convention note on the cross-spectrum). For the ACF, the sign choice ($t_i-t_j\approx\tau_k$ rather than $t_j-t_i\approx\tau_k$) is an arbitrary but fixed convention, harmless because $x$ is correlated with itself.
 
 \begin{algorithm*}[t]
 	\small
-	\caption{\textsc{PairCount} --- Gaussian (weighted) kernel, general cross case}
+	\caption{\textsc{PairCount} --- Gaussian (weighted) kernel, generic (ACF/CCF)}
 	\label{alg:b-generic}
-	\Require{$t=(t^x_i)_{i=1}^{n_x}$ sorted, $s=(t^y_j)_{j=1}^{n_y}$ sorted, lags $\{\tau_k\}_{k=1}^{K}$, bandwidth $h$}
+	\Require{$t^{(1)}=(t^{(1)}_j)_{j=1}^{n_1}$ sorted (outer array), $t^{(2)}=(t^{(2)}_i)_{i=1}^{n_2}$ sorted (window array), lags $\{\tau_k\}_{k=1}^{K}$, bandwidth $h$, sign $\epsilon\in\{+1,-1\}$}
 	\Ensure{$b=(b_k)_{k=1}^K$}
 	\ForPar{$k \gets 1$ \KwTo $K$}{
 		$\mathrm{lo}\gets 0$, $\mathrm{hi}\gets 0$, $b_k \gets 0$\;
-		\For{$j \gets 1$ \KwTo $n_y$}{
+		\For{$j \gets 1$ \KwTo $n_1$}{
 			\tcp{increasing $j$ $\Rightarrow$ increasing center $\Rightarrow$ lo/hi only advance}
-			$\mathrm{center} \gets t^y_j - \tau_k$\;
-			\While{$\mathrm{lo}<n_x$ and $t^x_{\mathrm{lo}} < \mathrm{center}-6h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
-			\While{$\mathrm{hi}<n_x$ and $t^x_{\mathrm{hi}} < \mathrm{center}+6h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
+			$\mathrm{center} \gets t^{(1)}_j + \epsilon\,\tau_k$\;
+			\While{$\mathrm{lo}<n_2$ and $t^{(2)}_{\mathrm{lo}} < \mathrm{center}-6h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
+			\While{$\mathrm{hi}<n_2$ and $t^{(2)}_{\mathrm{hi}} < \mathrm{center}+6h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
 			\For{$i \gets \mathrm{lo}$ \KwTo $\mathrm{hi}-1$}{
-				$b_k \gets b_k + \dfrac{1}{h\sqrt{2\pi}}\exp\!\Big(-\dfrac{(t^x_i-\mathrm{center})^2}{2h^2}\Big)$\;
+				$b_k \gets b_k + \dfrac{1}{h\sqrt{2\pi}}\exp\!\Big(-\dfrac{(t^{(2)}_i-\mathrm{center})^2}{2h^2}\Big)$\;
 			}
 		}
 		$b_k \gets \max(b_k, 10^{-16})$ \tcp*{avoids division by zero at sparsely-populated lags}
 	}
 	\Return{$b$}
+	\smallskip
+	\small $\bullet$ \textbf{ACF:} $t^{(1)}{=}t^{(2)}{=}t$, $n_1{=}n_2{=}n$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian}.\quad
+	$\bullet$ \textbf{CCF:} $t^{(1)}{=}s$, $t^{(2)}{=}t$, $n_1{=}n_y$, $n_2{=}n_x$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian\_cross}.
 \end{algorithm*}
 
 \begin{algorithm*}[t]
 	\small
-	\caption{\textsc{PairCount} --- rectangular (counting) kernel, general cross case}
+	\caption{\textsc{PairCount} --- rectangle (counting) kernel, generic (ACF/CCF)}
 	\label{alg:b-rect-generic}
-	\Require{$t=(t^x_i)_{i=1}^{n_x}$ sorted, $s=(t^y_j)_{j=1}^{n_y}$ sorted, lags $\{\tau_k\}_{k=1}^K$, half-width $h$}
+	\Require{$t^{(1)}=(t^{(1)}_j)_{j=1}^{n_1}$ sorted (outer array), $t^{(2)}=(t^{(2)}_i)_{i=1}^{n_2}$ sorted (window array), lags $\{\tau_k\}_{k=1}^K$, half-width $h$, sign $\epsilon\in\{+1,-1\}$}
 	\Ensure{$b=(b_k)_{k=1}^K$}
 	\ForPar{$k \gets 1$ \KwTo $K$}{
 		$\mathrm{lo}\gets 0$, $\mathrm{hi}\gets 0$, $b_k \gets 0$\;
-		\For{$j \gets 1$ \KwTo $n_y$}{
-			$\mathrm{center} \gets t^y_j - \tau_k$\;
-			\While{$\mathrm{lo}<n_x$ and $t^x_{\mathrm{lo}} < \mathrm{center}-h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
+		\For{$j \gets 1$ \KwTo $n_1$}{
+			$\mathrm{center} \gets t^{(1)}_j + \epsilon\,\tau_k$\;
+			\While{$\mathrm{lo}<n_2$ and $t^{(2)}_{\mathrm{lo}} < \mathrm{center}-h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
 			$\mathrm{hi} \gets \max(\mathrm{hi},\mathrm{lo})$\;
-			\While{$\mathrm{hi}<n_x$ and $t^x_{\mathrm{hi}} \le \mathrm{center}+h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
+			\While{$\mathrm{hi}<n_2$ and $t^{(2)}_{\mathrm{hi}} \le \mathrm{center}+h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
 			$b_k \gets b_k + (\mathrm{hi}-\mathrm{lo})$ \tcp*{direct count, no weighted sum: $O(1)$ per $j$}
 		}
 		$b_k \gets \max(b_k, 10^{-16})$\;
 	}
 	\Return{$b$}
+	\smallskip
+	\small $\bullet$ \textbf{ACF:} $t^{(1)}{=}t^{(2)}{=}t$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle}.\quad
+	$\bullet$ \textbf{CCF:} $t^{(1)}{=}s$, $t^{(2)}{=}t$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle\_cross}.
 \end{algorithm*}
-
-\noindent \textit{ACF case:} setting $s=t$, $n_y=n_x$ recovers exactly
-\texttt{compute\_b\_gaussian} and \texttt{compute\_b\_rectangle}, with
-$\mathrm{center}=t^x_j+\tau_k$ (pair condition $t^x_i-t^x_j\approx\tau_k$)
-in place of $\mathrm{center}=t^y_j-\tau_k$ (pair condition
-$t^y_j-t^x_i\approx\tau_k$) --- only the window-center definition
-differs between the two cases.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Implementation choices dictated by FINUFFT}
@@ -1286,7 +1281,7 @@ $N_1 = 32\max(n_x,n_y)$ (a $32\times$ oversampling factor) was
 validated empirically against the exact real-space estimator
 (\texttt{compute\_ccf\_gaussian\_realspace}; see
 \texttt{kernels.py}): a factor of $32$ is enough to bring the two
-estimators into close agreement for both the Gaussian and rectangular
+estimators into close agreement for both the Gaussian and rectangle
 kernels. Higher oversampling yields only marginal further improvement
 (mainly for strongly periodic signals with the Gaussian kernel) at the
 cost of increased $O(N_1\log N_1)$ time and memory. Scaling
