@@ -1,9 +1,9 @@
-\documentclass[twocolumn,numberedappendix,twocolappendix]{openjournal}
-\makeatletter
-\let\pre@bibdata\@empty  % empêche revtex d'ajouter main_nufftcfNotes à \bibdata dans le .aux
-\def\@bibdataout@init{}     
-\makeatother
-
+\documentclass[twocolumn,10pt]{article}
+\usepackage{stfloats}
+\usepackage{graphicx}
+\usepackage{balance}
+\usepackage{authblk}
+\usepackage{natbib}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{textgreek}
 \usepackage[utf8]{inputenc}
@@ -28,7 +28,7 @@
 \urlstyle{same}
 
 \usepackage{xspace}
-\usepackage{comment}
+
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \SetKwInOut{Require}{Require}
 \SetKwInOut{Ensure}{Ensure}
@@ -48,16 +48,116 @@
 
 \graphicspath{ {./figs/} }
 
-\begin{document}
+\usepackage{comment}
+
+
+%%%%%% Journal name cmd
+\newcommand\aj{\ref@jnl{AJ}}%        % Astronomical Journal 
+\newcommand\araa{\ref@jnl{ARA\&A}}%  % Annual Review of Astron and Astrophys 
+\newcommand\apj{\ref@jnl{ApJ}}%    % Astrophysical Journal 
+\newcommand\apjl{\ref@jnl{\@eapj@ApJLetters}}%     % Astrophysical Journal, Letters 
+\newcommand\apjs{\ref@jnl{ApJS}}%    % Astrophysical Journal, Supplement 
+\newcommand\ao{\ref@jnl{Appl.~Opt.}}%   % Applied Optics 
+\newcommand\apss{\ref@jnl{Ap\&SS}}%  % Astrophysics and Space Science 
+\newcommand\aap{\ref@jnl{A\&A}}%     % Astronomy and Astrophysics 
+\newcommand\aapr{\ref@jnl{A\&A~Rev.}}%  % Astronomy and Astrophysics Reviews 
+\newcommand\aaps{\ref@jnl{A\&AS}}%    % Astronomy and Astrophysics, Supplement 
+\newcommand\azh{\ref@jnl{AZh}}%       % Astronomicheskii Zhurnal 
+\newcommand\baas{\ref@jnl{BAAS}}%     % Bulletin of the AAS 
+\newcommand\icarus{\ref@jnl{Icarus}}% % Icarus
+\newcommand\jrasc{\ref@jnl{JRASC}}%   % Journal of the RAS of Canada 
+\newcommand\memras{\ref@jnl{MmRAS}}%  % Memoirs of the RAS 
+\newcommand\mnras{\ref@jnl{MNRAS}}%   % Monthly Notices of the RAS 
+\newcommand\pra{\ref@jnl{Phys.~Rev.~A}}% % Physical Review A: General Physics 
+\newcommand\prb{\ref@jnl{Phys.~Rev.~B}}% % Physical Review B: Solid State 
+\newcommand\prc{\ref@jnl{Phys.~Rev.~C}}% % Physical Review C 
+\newcommand\prd{\ref@jnl{Phys.~Rev.~D}}% % Physical Review D 
+\newcommand\pre{\ref@jnl{Phys.~Rev.~E}}% % Physical Review E 
+\newcommand\prl{\ref@jnl{Phys.~Rev.~Lett.}}% % Physical Review Letters 
+\newcommand\pasp{\ref@jnl{PASP}}%     % Publications of the ASP 
+\newcommand\pasj{\ref@jnl{PASJ}}%     % Publications of the ASJ 
+\newcommand\qjras{\ref@jnl{QJRAS}}%   % Quarterly Journal of the RAS 
+\newcommand\skytel{\ref@jnl{S\&T}}%   % Sky and Telescope 
+\newcommand\solphys{\ref@jnl{Sol.~Phys.}}% % Solar Physics 
+\newcommand\sovast{\ref@jnl{Soviet~Ast.}}% % Soviet Astronomy 
+\newcommand\ssr{\ref@jnl{Space~Sci.~Rev.}}% % Space Science Reviews 
+\newcommand\zap{\ref@jnl{ZAp}}%       % Zeitschrift fuer Astrophysik 
+\newcommand\nat{\ref@jnl{Nature}}%  % Nature 
+\newcommand\iaucirc{\ref@jnl{IAU~Circ.}}% % IAU Cirulars 
+\newcommand\aplett{\ref@jnl{Astrophys.~Lett.}}%  % Astrophysics Letters 
+\newcommand\apspr{\ref@jnl{Astrophys.~Space~Phys.~Res.}}% % Astrophysics Space Physics Research 
+\newcommand\bain{\ref@jnl{Bull.~Astron.~Inst.~Netherlands}}% % Bulletin Astronomical Institute of the Netherlands 
+\newcommand\fcp{\ref@jnl{Fund.~Cosmic~Phys.}}%   % Fundamental Cosmic Physics 
+\newcommand\gca{\ref@jnl{Geochim.~Cosmochim.~Acta}}% % Geochimica Cosmochimica Acta 
+\newcommand\grl{\ref@jnl{Geophys.~Res.~Lett.}}%  % Geophysics Research Letters 
+\newcommand\jcp{\ref@jnl{J.~Chem.~Phys.}}%     % Journal of Chemical Physics 
+\newcommand\jgr{\ref@jnl{J.~Geophys.~Res.}}%     % Journal of Geophysics Research 
+\newcommand\jqsrt{\ref@jnl{J.~Quant.~Spec.~Radiat.~Transf.}}%   % Journal of Quantitiative Spectroscopy and Radiative Trasfer 
+\newcommand\memsai{\ref@jnl{Mem.~Soc.~Astron.~Italiana}}% % Mem. Societa Astronomica Italiana 
+\newcommand\nphysa{\ref@jnl{Nucl.~Phys.~A}}%     % Nuclear Physics A 
+\newcommand\physrep{\ref@jnl{Phys.~Rep.}}%       % Physics Reports 
+\newcommand\physscr{\ref@jnl{Phys.~Scr}}%        % Physica Scripta 
+\newcommand\planss{\ref@jnl{Planet.~Space~Sci.}}%  % Planetary Space Science 
+\newcommand\procspie{\ref@jnl{Proc.~SPIE}}%      % Proceedings of the SPIE 
+
+\newcommand\actaa{\ref@jnl{Acta Astron.}}%  % Acta Astronomica
+\newcommand\caa{\ref@jnl{Chinese Astron. Astrophys.}}%  % Chinese Astronomy and Astrophysics
+\newcommand\cjaa{\ref@jnl{Chinese J. Astron. Astrophys.}}%  % Chinese Journal of Astronomy and Astrophysics
+\newcommand\jcap{\ref@jnl{J. Cosmology Astropart. Phys.}}%  % Journal of Cosmology and Astroparticle Physics
+\newcommand\na{\ref@jnl{New A}}%  % New Astronomy
+\newcommand\nar{\ref@jnl{New A Rev.}}%  % New Astronomy Review
+\newcommand\pasa{\ref@jnl{PASA}}%  % Publications of the Astron. Soc. of Australia
+\newcommand\rmxaa{\ref@jnl{Rev. Mexicana Astron. Astrofis.}}%  % Revista Mexicana de Astronomia y Astrofisica
+
+%%%%%%
+%Meta data
 
 \title{nufftcf: Fast Auto- and Cross-Correlation Function Estimation for
-Irregularly-Sampled Time Series via the Non-Uniform FFT}
-
+	Irregularly-Sampled Time Series via the Non-Uniform FFT}
 \author{Jean-Eric Campagne\orcidlink{0000-0002-1590-6927}}
-\email{jean-eric.campagne@ijclab.in2p3.fr}
-\affiliation{Universit\'e Paris-Saclay, CNRS/IN2P3, IJCLab, 91405 Orsay, France}
+\affil{Universit\'e Paris-Saclay, CNRS/IN2P3, IJCLab, 91405 Orsay, France \\ \texttt{jean-eric.campagne@ijclab.in2p3.fr}} % Email dans l'affiliation
+\date{\today}
+
+%%%%%%
+
+\begin{document}
+\twocolumn[ \begin{@twocolumnfalse}
+\maketitle
+
 
 \begin{abstract}
+	Estimating the auto-correlation function (ACF) of a single, and the
+	cross-correlation function (CCF) between two, irregularly-sampled scalar
+	time series is a standard task across physics fields such as astronomy,
+	hydrogeology, and environmental science. We aim to provide an ACF/CCF
+	estimator that is numerically consistent with established,
+	well-validated kernel-weighted definitions, while scaling as
+	$O(n\log n)$ rather than $O(n^2)$.
+	
+	\nufftcf evaluates the Wiener--Khinchin theorem for irregularly sampled
+	data using the Non-Uniform Fast Fourier Transform (NUFFT), via the
+	Flatiron Institute's \texttt{FINUFFT} library, with Gaussian- and
+	rectangle-kernel estimators. An $O(n)$ two-pointer scan replaces the
+	naive $O(n^2)$ computation of the effective pair count that normalizes
+	each lag bin. Direct, real-space implementations of the same
+	estimators, and a dedicated classical-FFT path for regularly-sampled
+	data, are provided alongside the NUFFT route as accuracy references,
+	all sharing a single calling convention.
+	
+	We validate \nufftcf against \pastas (regular-grid ACF, to numerical
+	precision), used in groundwater time series analysis, and against
+	\pyzdcf (CCF, on cases with known theoretical cross-correlation), used
+	in astronomical time series analysis. Benchmarks confirm the expected
+	asymptotic scalings -- $O(n\log n)$ for \nufftcf versus $O(n^2)$ for
+	\pastas's slotting technique -- with \nufftcf already advantageous at
+	moderate series lengths thanks to its low (millisecond-scale) overhead,
+	and reaching a $\sim$300$\times$ speed-up over \pastas by $n = 10^5$
+	points; on regularly-sampled data, \nufftcf's dedicated FFT path
+	further reduces both cost and overhead relative to its own NUFFT
+	estimator. {\color{red}[TODO: state the residual spectral-leakage bias
+		(\%) measured for strongly periodic, gappy input.]}
+
+\color{red}
 Estimating the auto-correlation function (ACF) of a single, and the
 cross-correlation function (CCF) between two, irregularly-sampled scalar
 time series is a standard task across different physics fields as astronomy, hydrogeology, and
@@ -75,23 +175,23 @@ dedicated classical-FFT estimators for regularly-sampled data, are
 provided alongside the NUFFT route as accuracy references, all sharing a
 single calling convention.
 
+
 We validate \nufftcf against \pastas (regular-grid ACF, to numerical
- precision) known in  groundwater time series analysis and against \pyzdcf (CCF, on cases with known theoretical
- cross-correlation) known in  astronomical time series analysis. We measure a speed-up of approximately [XX]x over
- \pastas for ACF estimation at $n = [XX]$, with the NUFFT estimator's
- residual spectral-leakage bias quantified at [XX]\% for strongly
- periodic, gappy input.
+precision) known in  groundwater time series analysis and against \pyzdcf (CCF, on cases with known theoretical cross-correlation) known in  astronomical time series analysis. 
+
+We measure a speed-up of approximately "XX"x over \pastas for ACF estimation at $n = "XX"$, with the NUFFT estimator's
+residual spectral-leakage bias quantified at "XX"\% for strongly
+periodic, gappy input.
 {\color{red} [TODO: summarize validation and benchmark results here.]}
+
 \end{abstract}
+\noindent
 
-\begin{keywords}
-    {Time series analysis, Correlation function, Non-uniform Fast Fourier Transform}
-\end{keywords}
+\textbf{Keywords:} Time series analysis, Correlation function, Non-uniform Fast Fourier Transform
 
-\maketitle
-
-
-
+\vspace{1em} 
+\end{@twocolumnfalse} 
+]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 \label{sec:introduction}
@@ -727,31 +827,6 @@ calibrate and subtract the selection bias via a bootstrap/Monte-Carlo
 procedure on surrogate data, analogous to the internal Monte-Carlo
 simulations used by \pyzdcf for its own uncertainty estimates.
 
-\begin{comment}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Timing Benchmarks}
-\label{sec:benchmarks}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{benchmark_acf_macosx_fit.pdf}
-	\caption{ACF benchmark \nufftcf versus \pastas.  robust fit (soft_l1)
-		error bars show the min-to-max spread across repeats at each point}
-	\label{fig:acf_bench}
-\end{figure*}
-
-
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{gaussian_benchmark_acf_regular_macosx_fit.pdf}
-	\caption{ACF benchmark (regular data) Pastas vs nufftcf (fft / nufft) Gaussian kernel.}
-	\label{fig:acf_regular_bench}
-\end{figure*}
-
-
-\end{comment}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Timing Benchmarks}
 \label{sec:benchmarks}
