@@ -265,6 +265,7 @@ three standard types are relevant here (see sign convention in Section~\ref{app:
     at nonuniform points $t_j$, $j=1,\dots,n$, compute
     \begin{equation}
     \hat X(f_k) = \sum_j x_j\, e^{i f_k t_j} := X_k
+    \label{eq:nufft_type1}
     \end{equation}
      at $m$ \textit{uniform} output frequencies $f_k$.
     \item \textbf{type~2} (``uniform to nonuniform''): the adjoint
@@ -272,6 +273,7 @@ three standard types are relevant here (see sign convention in Section~\ref{app:
     arbitrary nonuniform output points:
         \begin{equation}
     	x_j = \sum_k X_k\, e^{-i f_k t_j}
+    	\label{eq:nufft_type2}
     \end{equation}
     
 \end{itemize}
@@ -1068,7 +1070,7 @@ kernel-parameterized algorithm to avoid redundancy.
 %
 \subsection{Cross and Autocorrelation functions}
 %
-Algorithm~\ref{alg:ccf-nufft}describes the general NUFFT-based CCF estimator.
+Algorithm~\ref{alg:ccf-nufft} describes the general NUFFT-based CCF estimator.
 It evaluates the Wiener--Khinchin identity by applying a type~1 NUFFT to each series,
 computes the cross-spectrum $\hat X^\ast(f)\hat Y(f)$,
 evaluates it at the requested lags using a type~2 NUFFT,
@@ -1161,7 +1163,6 @@ The interior-position trick of Algorithm~\ref{alg:acf-scale0} is unnecessary her
 \end{algorithm*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\color{blue}
 \subsection{Effective pair count algorithms}
 \label{app:pair-count}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1178,66 +1179,77 @@ $O(n_1+n_2)$ per lag, and to an overall $O((n_1+n_2)\log n_1)$-equivalent
 throughput when parallelized (\texttt{prange}) across lags.
 
 The ACF and CCF pair-counts are \emph{not} separate algorithms but two
-instantiations of the same two-pointer scan, differing only in the role of the time arrays and the sign $\epsilon\in\{+1,-1\}$ in the window-center formula $c_j = t^{(1)}_j + \epsilon\,\tau_k$. For the ACF ($t^{(1)}=t^{(2)}=t$, $\epsilon=+1$), the window center is $c_j = t_j+\tau_k$ with pair condition $t_i-t_j\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian} and \texttt{compute\_b\_rectangle}. For the CCF ($t^{(1)}=s=t^y$, $t^{(2)}=t=t^x$, $\epsilon=-1$), the window center is $c_j = s_j-\tau_k$ with pair condition $s_j-t_i\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian\_cross} and \texttt{compute\_b\_rectangle\_cross}. 
+instantiations of the same two-pointer scan, differing only in the role
+of the time arrays and the sign $\epsilon\in\{+1,-1\}$ in the window-center
+formula $c_j = t^{y}_j + \epsilon\,\tau_k$. For the ACF ($t^{y}=t^{x}=t$,
+$\epsilon=+1$), the window center is $c_j = t_j+\tau_k$ with pair condition
+$t_i-t_j\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian} and
+\texttt{compute\_b\_rectangle}. For the CCF ($t^{y}=s$, $t^{x}=t$,
+$\epsilon=-1$), the window center is $c_j = s_j-\tau_k$ with pair condition
+$s_j-t_i\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian\_cross}
+and \texttt{compute\_b\_rectangle\_cross}.
 
-The sign flip encodes the asymmetry of the CCF (lag $+\tau$ means $y$ lags $x$ by $\tau$; cf. the sign-convention note on the cross-spectrum). For the ACF, the sign choice ($t_i-t_j\approx\tau_k$ rather than $t_j-t_i\approx\tau_k$) is an arbitrary but fixed convention, harmless because $x$ is correlated with itself.
-
-\begin{algorithm*}[t]
+The sign flip encodes the asymmetry of the CCF (lag $+\tau$ means $y$ lags
+$x$ by $\tau$; cf. the sign-convention note on the cross-spectrum).
+For the ACF, the sign choice ($t_i-t_j\approx\tau_k$ rather than
+$t_j-t_i\approx\tau_k$) is an arbitrary but fixed convention, harmless
+because $x$ is correlated with itself.
+\begin{algorithm*}
 	\small
 	\caption{\textsc{PairCount} --- Gaussian (weighted) kernel, generic (ACF/CCF)}
 	\label{alg:b-generic}
-	\Require{$t^{(1)}=(t^{(1)}_j)_{j=1}^{n_1}$ sorted (outer array), $t^{(2)}=(t^{(2)}_i)_{i=1}^{n_2}$ sorted (window array), lags $\{\tau_k\}_{k=1}^{K}$, bandwidth $h$, sign $\epsilon\in\{+1,-1\}$}
+	\Require{$t^{y}=(t^{y}_j)_{j=1}^{n_y}$ sorted (outer array), $t^{x}=(t^{x}_i)_{i=1}^{n_x}$ sorted (window array), lags $\{\tau_k\}_{k=1}^{K}$, bandwidth $h$, sign $\epsilon\in\{+1,-1\}$}
 	\Ensure{$b=(b_k)_{k=1}^K$}
 	\ForPar{$k \gets 1$ \KwTo $K$}{
 		$\mathrm{lo}\gets 0$, $\mathrm{hi}\gets 0$, $b_k \gets 0$\;
-		\For{$j \gets 1$ \KwTo $n_1$}{
+		\For{$j \gets 1$ \KwTo $n_y$}{
 			\tcp{increasing $j$ $\Rightarrow$ increasing center $\Rightarrow$ lo/hi only advance}
-			$\mathrm{center} \gets t^{(1)}_j + \epsilon\,\tau_k$\;
-			\While{$\mathrm{lo}<n_2$ and $t^{(2)}_{\mathrm{lo}} < \mathrm{center}-6h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
-			\While{$\mathrm{hi}<n_2$ and $t^{(2)}_{\mathrm{hi}} < \mathrm{center}+6h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
+			$\mathrm{center} \gets t^{y}_j + \epsilon\,\tau_k$\;
+			\While{$\mathrm{lo}<n_x$ and $t^{x}_{\mathrm{lo}} < \mathrm{center}-6h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
+			\While{$\mathrm{hi}<n_x$ and $t^{x}_{\mathrm{hi}} < \mathrm{center}+6h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
 			\For{$i \gets \mathrm{lo}$ \KwTo $\mathrm{hi}-1$}{
-				$b_k \gets b_k + \dfrac{1}{h\sqrt{2\pi}}\exp\!\Big(-\dfrac{(t^{(2)}_i-\mathrm{center})^2}{2h^2}\Big)$\;
+				$b_k \gets b_k + \dfrac{1}{h\sqrt{2\pi}}\exp\!\Big(-\dfrac{(t^{x}_i-\mathrm{center})^2}{2h^2}\Big)$\;
 			}
 		}
 		$b_k \gets \max(b_k, 10^{-16})$ \tcp*{avoids division by zero at sparsely-populated lags}
 	}
 	\Return{$b$}
 	\smallskip
-	\small $\bullet$ \textbf{ACF:} $t^{(1)}{=}t^{(2)}{=}t$, $n_1{=}n_2{=}n$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian}.\quad
-	$\bullet$ \textbf{CCF:} $t^{(1)}{=}s$, $t^{(2)}{=}t$, $n_1{=}n_y$, $n_2{=}n_x$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian\_cross}.
+	\small $\bullet$ \textbf{ACF:} $t^{y}{=}t^{x}{=}t$, $n_y{=}n_x{=}n$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian}.\quad
+	$\bullet$ \textbf{CCF:} $t^{y}{=}s$, $t^{x}{=}t$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian\_cross}.
 \end{algorithm*}
 
-\begin{algorithm*}[t]
+\begin{algorithm*}
 	\small
 	\caption{\textsc{PairCount} --- rectangle (counting) kernel, generic (ACF/CCF)}
 	\label{alg:b-rect-generic}
-	\Require{$t^{(1)}=(t^{(1)}_j)_{j=1}^{n_1}$ sorted (outer array), $t^{(2)}=(t^{(2)}_i)_{i=1}^{n_2}$ sorted (window array), lags $\{\tau_k\}_{k=1}^K$, half-width $h$, sign $\epsilon\in\{+1,-1\}$}
+	\Require{$t^{y}=(t^{y}_j)_{j=1}^{n_y}$ sorted (outer array), $t^{x}=(t^{x}_i)_{i=1}^{n_x}$ sorted (window array), lags $\{\tau_k\}_{k=1}^K$, half-width $h$, sign $\epsilon\in\{+1,-1\}$}
 	\Ensure{$b=(b_k)_{k=1}^K$}
 	\ForPar{$k \gets 1$ \KwTo $K$}{
 		$\mathrm{lo}\gets 0$, $\mathrm{hi}\gets 0$, $b_k \gets 0$\;
-		\For{$j \gets 1$ \KwTo $n_1$}{
-			$\mathrm{center} \gets t^{(1)}_j + \epsilon\,\tau_k$\;
-			\While{$\mathrm{lo}<n_2$ and $t^{(2)}_{\mathrm{lo}} < \mathrm{center}-h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
+		\For{$j \gets 1$ \KwTo $n_y$}{
+			$\mathrm{center} \gets t^{y}_j + \epsilon\,\tau_k$\;
+			\While{$\mathrm{lo}<n_x$ and $t^{x}_{\mathrm{lo}} < \mathrm{center}-h$}{$\mathrm{lo}\gets \mathrm{lo}+1$\;}
 			$\mathrm{hi} \gets \max(\mathrm{hi},\mathrm{lo})$\;
-			\While{$\mathrm{hi}<n_2$ and $t^{(2)}_{\mathrm{hi}} \le \mathrm{center}+h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
+			\While{$\mathrm{hi}<n_x$ and $t^{x}_{\mathrm{hi}} \le \mathrm{center}+h$}{$\mathrm{hi}\gets \mathrm{hi}+1$\;}
 			$b_k \gets b_k + (\mathrm{hi}-\mathrm{lo})$ \tcp*{direct count, no weighted sum: $O(1)$ per $j$}
 		}
 		$b_k \gets \max(b_k, 10^{-16})$\;
 	}
 	\Return{$b$}
 	\smallskip
-	\small $\bullet$ \textbf{ACF:} $t^{(1)}{=}t^{(2)}{=}t$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle}.\quad
-	$\bullet$ \textbf{CCF:} $t^{(1)}{=}s$, $t^{(2)}{=}t$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle\_cross}.
+	\small $\bullet$ \textbf{ACF:} $t^{y}{=}t^{x}{=}t$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle}.\quad
+	$\bullet$ \textbf{CCF:} $t^{y}{=}s$, $t^{x}{=}t$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle\_cross}.
 \end{algorithm*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Implementation choices dictated by FINUFFT}
 \label{app:finufft-notes}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Algorithms~\ref{alg:ccf-nufft}--\ref{alg:acf-nufft} rely on
-\texttt{FINUFFT} for both nonuniform transforms (\texttt{nufft1d1},
+Algorithms~\ref{alg:ccf-nufft}--\ref{alg:acf-nufft} rely on the
+\texttt{FINUFFT} library for both nonuniform transforms (\texttt{nufft1d1},
 type~1, and \texttt{nufft1d2}, type~2). Several implementation choices
-follow directly from this library's constraints and conventions; we
+follow directly from this library's constraints and conventions. We
 detail them here, complementing the $O(n)$-per-lag \texttt{numba}
 kernels of Appendix~\ref{app:pair-count}.
 
@@ -1246,35 +1258,52 @@ kernels of Appendix~\ref{app:pair-count}.
 domain $[-\pi,\pi)$ or $[0,2\pi)$, so the user-supplied sample times
 $t$ (in days, or any other unit) must first be rescaled. For the ACF, a
 single series is involved and its own extent is used:
-$\tilde t = \frac{t-\min t}{\max t-\min t}\,2\pi$. For the CCF, however,
+$$\tilde t = \frac{t-\min(t)}{\max(t)-\min(t)}\,2\pi.$$ 
+For the CCF, however,
 \emph{two} series $t$ and $s$, potentially shifted and with different
 supports, must be placed on the \emph{same} frequency grid for the
-cross-product $\overline{\hat F_1}\odot\hat F_2$ to be meaningful:
+cross-product $\overline{\hat F_1}\odot\hat F_2$ to be meaningful.
 Algorithm~\ref{alg:ccf-nufft} therefore uses the \emph{union} of the
-two time spans, $t_{\min}=\min(\min t,\min s)$,
-$\mathrm{span}=\max(\max t,\max s)-t_{\min}$, and applies the same
+two time spans, $t_{\min}=\min(\min(t),\min(s))$,
+$\mathrm{span}=\max(\max(t),\max(s))-t_{\min}$, and applies the same
 affine map to $t$, $s$, and to the requested lags $\tau$. Because lags
 have units of time, they are rescaled identically,
-$\tilde\tau=\tau/\mathrm{span}\cdot 2\pi$, which is what allows the
+$\tilde\tau=2\pi\tau/\mathrm{span}$, which is what allows the
 type~2 output to be read off directly at the desired lags without any
 further inverse transform.
-
+%
 \paragraph{\bf Sign convention and the non-Hermitian cross-spectrum.}
-With \texttt{isign=+1}, \texttt{FINUFFT} computes
-$f_j=\sum_k F_k\,e^{-ikx_j}$ (negative exponent). For the ACF, the
-power spectrum $|\hat X(f)|^2$ is real and even (Hermitian), so the
-sign convention has no effect: $M=\hat F\odot\overline{\hat F}$. For
-the CCF, however, the cross-spectrum $\hat X^\ast(f)\,\hat Y(f)$ is
-\emph{not} Hermitian in general: the choice
+%
+With \texttt{FINUFFT} default sign conventions,
+\texttt{isign=+1} for type-1 (Equation~\ref{eq:nufft_type1}) and
+\texttt{isign=-1} for type-2 (Equation~\ref{eq:nufft_type2}), this 
+corresponds to the usual opposite-sign Fourier-transform conventions.
+For the ACF, the power spectrum $|\hat X(f)|^2$ is real and even, so the
+sign convention has no effect:
+$M=\hat F\odot\overline{\hat F}$.
+For the CCF, the cross-spectrum $\hat X^\ast(f)\,\hat Y(f)$ \emph{is}
+Hermitian (since $x,y$ are real-valued), which guarantees that
+$c_{\mathrm{raw}}$ is real up to NUFFT roundoff. However, it does not
+generally have exchange symmetry $x\leftrightarrow y$:
+$$
+S_{xy}(-f)=S_{yx}(f)\neq S_{xy}(f)\ \text{in general},
+$$
+mirroring the time-domain identity
+$C_{yx}(\tau)=C_{xy}(-\tau)$.
+Consequently, with the convention
+$C_{xy}(\tau)=\int x(t)y(t+\tau)\,dt$, the choice
 $M=\overline{\hat F_1}\odot\hat F_2$ places the correlation peak at the
-correct lag $+\tau$ (the opposite choice
-$\hat F_1\odot\overline{\hat F_2}$ would place it at $-\tau$, a
-mirrored result). This is a pure convention issue, unrelated to
-numerical precision, but it must be fixed correctly for the sign of the
-estimated delay to be physical.
-
+physical lag $+\tau$ when signal 2 is delayed by $+\tau$ relative to
+signal 1, whereas the opposite choice
+$\hat F_1\odot\overline{\hat F_2}$ effectively computes $S_{yx}(f)$ and
+therefore places the peak at $-\tau$, i.e.\ a time-reversed (mirrored)
+result. This is a matter of Fourier/CCF convention rather than numerical
+precision, but the convention must be applied consistently for the sign
+of the estimated delay to have the intended physical meaning.
+%
 \paragraph{\bf Frequency-grid size $N_1$.}
-The parameter $N_1$ sets the resolution of the type~1 transform (time
+%
+The parameter $N_1$ (Algorithms~\ref{alg:ccf-nufft}-\ref{alg:acf-nufft})  sets the resolution of the type~1 transform (time
 $\to$ frequency), and therefore the fidelity of the reconstructed
 signal ahead of the type~2 evaluation. The default
 $N_1 = 32\max(n_x,n_y)$ (a $32\times$ oversampling factor) was
@@ -1287,28 +1316,29 @@ kernels. Higher oversampling yields only marginal further improvement
 cost of increased $O(N_1\log N_1)$ time and memory. Scaling
 $N_1\propto n$, rather than fixing a constant grid size, keeps the
 frequency grid adequate regardless of series length.
-
+%
 \paragraph{\bf Requested tolerance $\varepsilon$.}
-The \texttt{eps} parameter (default $10^{-9}$) sets the accuracy
-requested from \texttt{FINUFFT}'s internal iterative scheme (gridding
-+ FFT + deconvolution; Section~\ref{sec:nufft}). A looser tolerance
-(typically $10^{-6}$--$10^{-9}$ in common \texttt{FINUFFT} usage)
-speeds up the computation but introduces NUFFT-specific numerical
-noise, distinct from the spectral-leakage bias discussed in
-Section~\ref{sec:discussion} (a windowing artifact due to irregular or
-gappy sampling, of order $1$--$3\,\%$ on ACF amplitude, independent of
-$\varepsilon$).
-
+%
+The \texttt{eps} parameter sets the accuracy requested from
+\texttt{FINUFFT} internal iterative scheme (gridding + FFT +
+deconvolution; Section~\ref{sec:nufft}). While \texttt{FINUFFT} own
+library default is $10^{-6}$, our implementation uses a tighter default
+of $10^{-9}$ (Algorithms~\ref{alg:ccf-nufft}--\ref{alg:acf-nufft}).
+Looser values such as $10^{-6}$ speed up the computation but introduce
+NUFFT-specific numerical noise.
+%
 \paragraph{\bf Lag-0 normalization and interior placement.}
+%
 The smoothing step (Gaussian or box filter) applied to the raw NUFFT
-output introduces an edge artifact: a point at the \emph{end} of the
+output (Algorithm~\ref{alg:ccf-nufft} step~8, Algorithm~\ref{alg:acf-nufft} step~6) 
+introduces an edge artifact: a point at the \emph{end} of the
 evaluated array is not smoothed symmetrically, unlike an
 \emph{interior} point. The CCF peak of interest (at lag $\tau_0$,
 interior to the requested \texttt{lags} range) \emph{is} an interior
 point. Dividing this peak by an $\mathrm{ACF}(0)$ scale computed by
 placing lag $0$ at the \emph{first} position of an array (hence
 smoothed asymmetrically) introduced a systematic $2$--$3\,\%$ deficit
-in the estimated CCF peak. Algorithm~\ref{alg:acf-scale0} corrects this
+in the estimated CCF peak. Algorithm~\ref{alg:acf-scale0} (step~3) corrects this
 by evaluating $\mathrm{ACF}_x(0)$ on a small, \emph{symmetric} lag
 array centered on $0$ (indices $-n_h,\dots,0,\dots,n_h$, with
 $n_h=\max(\lceil 4h\rceil+2,5)$, i.e.\ at least $4h$ of margin on each
@@ -1321,7 +1351,7 @@ posteriori}.
 \paragraph{\bf Prior standardization.}
 Both $x$ and $y$ are standardized (zero mean, unit variance) before any
 call to \texttt{FINUFFT}. This is not dictated by \texttt{FINUFFT}
-itself, but ensures that the NUFFT's internal scale (which depends on
+itself, but ensures that the NUFFT internal scale (which depends on
 input amplitude) is consistent between the two compared series;
 combined with the final division by
 $\sqrt{\mathrm{ACF}_x(0)\cdot\mathrm{ACF}_y(0)}$, it guarantees
