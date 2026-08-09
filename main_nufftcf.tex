@@ -49,73 +49,14 @@
 \graphicspath{ {./figs/} }
 
 \usepackage{comment}
-
-
-%%%%%% Journal name cmd
-\newcommand\aj{\ref@jnl{AJ}}%        % Astronomical Journal 
-\newcommand\araa{\ref@jnl{ARA\&A}}%  % Annual Review of Astron and Astrophys 
-\newcommand\apj{\ref@jnl{ApJ}}%    % Astrophysical Journal 
-\newcommand\apjl{\ref@jnl{\@eapj@ApJLetters}}%     % Astrophysical Journal, Letters 
-\newcommand\apjs{\ref@jnl{ApJS}}%    % Astrophysical Journal, Supplement 
-\newcommand\ao{\ref@jnl{Appl.~Opt.}}%   % Applied Optics 
-\newcommand\apss{\ref@jnl{Ap\&SS}}%  % Astrophysics and Space Science 
-\newcommand\aap{\ref@jnl{A\&A}}%     % Astronomy and Astrophysics 
-\newcommand\aapr{\ref@jnl{A\&A~Rev.}}%  % Astronomy and Astrophysics Reviews 
-\newcommand\aaps{\ref@jnl{A\&AS}}%    % Astronomy and Astrophysics, Supplement 
-\newcommand\azh{\ref@jnl{AZh}}%       % Astronomicheskii Zhurnal 
-\newcommand\baas{\ref@jnl{BAAS}}%     % Bulletin of the AAS 
-\newcommand\icarus{\ref@jnl{Icarus}}% % Icarus
-\newcommand\jrasc{\ref@jnl{JRASC}}%   % Journal of the RAS of Canada 
-\newcommand\memras{\ref@jnl{MmRAS}}%  % Memoirs of the RAS 
-\newcommand\mnras{\ref@jnl{MNRAS}}%   % Monthly Notices of the RAS 
-\newcommand\pra{\ref@jnl{Phys.~Rev.~A}}% % Physical Review A: General Physics 
-\newcommand\prb{\ref@jnl{Phys.~Rev.~B}}% % Physical Review B: Solid State 
-\newcommand\prc{\ref@jnl{Phys.~Rev.~C}}% % Physical Review C 
-\newcommand\prd{\ref@jnl{Phys.~Rev.~D}}% % Physical Review D 
-\newcommand\pre{\ref@jnl{Phys.~Rev.~E}}% % Physical Review E 
-\newcommand\prl{\ref@jnl{Phys.~Rev.~Lett.}}% % Physical Review Letters 
-\newcommand\pasp{\ref@jnl{PASP}}%     % Publications of the ASP 
-\newcommand\pasj{\ref@jnl{PASJ}}%     % Publications of the ASJ 
-\newcommand\qjras{\ref@jnl{QJRAS}}%   % Quarterly Journal of the RAS 
-\newcommand\skytel{\ref@jnl{S\&T}}%   % Sky and Telescope 
-\newcommand\solphys{\ref@jnl{Sol.~Phys.}}% % Solar Physics 
-\newcommand\sovast{\ref@jnl{Soviet~Ast.}}% % Soviet Astronomy 
-\newcommand\ssr{\ref@jnl{Space~Sci.~Rev.}}% % Space Science Reviews 
-\newcommand\zap{\ref@jnl{ZAp}}%       % Zeitschrift fuer Astrophysik 
-\newcommand\nat{\ref@jnl{Nature}}%  % Nature 
-\newcommand\iaucirc{\ref@jnl{IAU~Circ.}}% % IAU Cirulars 
-\newcommand\aplett{\ref@jnl{Astrophys.~Lett.}}%  % Astrophysics Letters 
-\newcommand\apspr{\ref@jnl{Astrophys.~Space~Phys.~Res.}}% % Astrophysics Space Physics Research 
-\newcommand\bain{\ref@jnl{Bull.~Astron.~Inst.~Netherlands}}% % Bulletin Astronomical Institute of the Netherlands 
-\newcommand\fcp{\ref@jnl{Fund.~Cosmic~Phys.}}%   % Fundamental Cosmic Physics 
-\newcommand\gca{\ref@jnl{Geochim.~Cosmochim.~Acta}}% % Geochimica Cosmochimica Acta 
-\newcommand\grl{\ref@jnl{Geophys.~Res.~Lett.}}%  % Geophysics Research Letters 
-\newcommand\jcp{\ref@jnl{J.~Chem.~Phys.}}%     % Journal of Chemical Physics 
-\newcommand\jgr{\ref@jnl{J.~Geophys.~Res.}}%     % Journal of Geophysics Research 
-\newcommand\jqsrt{\ref@jnl{J.~Quant.~Spec.~Radiat.~Transf.}}%   % Journal of Quantitiative Spectroscopy and Radiative Trasfer 
-\newcommand\memsai{\ref@jnl{Mem.~Soc.~Astron.~Italiana}}% % Mem. Societa Astronomica Italiana 
-\newcommand\nphysa{\ref@jnl{Nucl.~Phys.~A}}%     % Nuclear Physics A 
-\newcommand\physrep{\ref@jnl{Phys.~Rep.}}%       % Physics Reports 
-\newcommand\physscr{\ref@jnl{Phys.~Scr}}%        % Physica Scripta 
-\newcommand\planss{\ref@jnl{Planet.~Space~Sci.}}%  % Planetary Space Science 
-\newcommand\procspie{\ref@jnl{Proc.~SPIE}}%      % Proceedings of the SPIE 
-
-\newcommand\actaa{\ref@jnl{Acta Astron.}}%  % Acta Astronomica
-\newcommand\caa{\ref@jnl{Chinese Astron. Astrophys.}}%  % Chinese Astronomy and Astrophysics
-\newcommand\cjaa{\ref@jnl{Chinese J. Astron. Astrophys.}}%  % Chinese Journal of Astronomy and Astrophysics
-\newcommand\jcap{\ref@jnl{J. Cosmology Astropart. Phys.}}%  % Journal of Cosmology and Astroparticle Physics
-\newcommand\na{\ref@jnl{New A}}%  % New Astronomy
-\newcommand\nar{\ref@jnl{New A Rev.}}%  % New Astronomy Review
-\newcommand\pasa{\ref@jnl{PASA}}%  % Publications of the Astron. Soc. of Australia
-\newcommand\rmxaa{\ref@jnl{Rev. Mexicana Astron. Astrofis.}}%  % Revista Mexicana de Astronomia y Astrofisica
-
 %%%%%%
-%Meta data
+\usepackage{aas_macros}
+%%%%%%
 
 \title{nufftcf: Fast Auto- and Cross-Correlation Function Estimation for
 	Irregularly-Sampled Time Series via the Non-Uniform FFT}
 \author{Jean-Eric Campagne\orcidlink{0000-0002-1590-6927}}
-\affil{Universit\'e Paris-Saclay, CNRS/IN2P3, IJCLab, 91405 Orsay, France \\ \texttt{jean-eric.campagne@ijclab.in2p3.fr}} % Email dans l'affiliation
+\affil{Universit\'e Paris-Saclay, CNRS/IN2P3, IJCLab, 91405 Orsay, France \\ \texttt{jean-eric.campagne@ijclab.in2p3.fr}}
 \date{\today}
 
 %%%%%%
@@ -123,44 +64,11 @@
 \begin{document}
 \twocolumn[ \begin{@twocolumnfalse}
 \maketitle
-
-
+%
 \begin{abstract}
-	Estimating the auto-correlation function (ACF) of a single, and the
-	cross-correlation function (CCF) between two, irregularly-sampled scalar
-	time series is a standard task across physics fields such as astronomy,
-	hydrogeology, and environmental science. We aim to provide an ACF/CCF
-	estimator that is numerically consistent with established,
-	well-validated kernel-weighted definitions, while scaling as
-	$O(n\log n)$ rather than $O(n^2)$.
-	
-	\nufftcf evaluates the Wiener--Khinchin theorem for irregularly sampled
-	data using the Non-Uniform Fast Fourier Transform (NUFFT), via the
-	Flatiron Institute's \texttt{FINUFFT} library, with Gaussian- and
-	rectangle-kernel estimators. An $O(n)$ two-pointer scan replaces the
-	naive $O(n^2)$ computation of the effective pair count that normalizes
-	each lag bin. Direct, real-space implementations of the same
-	estimators, and a dedicated classical-FFT path for regularly-sampled
-	data, are provided alongside the NUFFT route as accuracy references,
-	all sharing a single calling convention.
-	
-	We validate \nufftcf against \pastas (regular-grid ACF, to numerical
-	precision), used in groundwater time series analysis, and against
-	\pyzdcf (CCF, on cases with known theoretical cross-correlation), used
-	in astronomical time series analysis. Benchmarks confirm the expected
-	asymptotic scalings -- $O(n\log n)$ for \nufftcf versus $O(n^2)$ for
-	\pastas's slotting technique -- with \nufftcf already advantageous at
-	moderate series lengths thanks to its low (millisecond-scale) overhead,
-	and reaching a $\sim$300$\times$ speed-up over \pastas by $n = 10^5$
-	points; on regularly-sampled data, \nufftcf's dedicated FFT path
-	further reduces both cost and overhead relative to its own NUFFT
-	estimator. {\color{red}[TODO: state the residual spectral-leakage bias
-		(\%) measured for strongly periodic, gappy input.]}
-
-\color{red}
-Estimating the auto-correlation function (ACF) of a single, and the
-cross-correlation function (CCF) between two, irregularly-sampled scalar
-time series is a standard task across different physics fields as astronomy, hydrogeology, and
+Estimating the auto-correlation function (ACF) and the
+cross-correlation function (CCF) of irregularly-sampled
+series is a standard task across different physics fields as e.g. astronomy, and
 environmental fields. We aim to provide an ACF/CCF estimator that is
 numerically consistent with established, well-validated kernel-weighted
 definitions, while scaling as $O(n\log n)$ rather than $O(n^2)$.
@@ -170,25 +78,23 @@ sampled data using the Non-Uniform Fast Fourier Transform (NUFFT), via the
 Flatiron Institute's \texttt{FINUFFT} library, and using the
 Gaussian- and rectangle-kernel estimators. An $O(n)$ two-pointer scan replaces the naive
 $O(n^2)$ computation of the effective pair count that normalizes each lag
-bin. Direct, real-space implementations of the same estimators, and
+bin. Direct, real-space implementations of the same estimators for small series and for reference, and
 dedicated classical-FFT estimators for regularly-sampled data, are
-provided alongside the NUFFT route as accuracy references, all sharing a
+provided alongside the NUFFT implementation, all sharing a
 single calling convention.
 
-
-We validate \nufftcf against \pastas (regular-grid ACF, to numerical
-precision) known in  groundwater time series analysis and against \pyzdcf (CCF, on cases with known theoretical cross-correlation) known in  astronomical time series analysis. 
-
-We measure a speed-up of approximately "XX"x over \pastas for ACF estimation at $n = "XX"$, with the NUFFT estimator's
-residual spectral-leakage bias quantified at "XX"\% for strongly
-periodic, gappy input.
-{\color{red} [TODO: summarize validation and benchmark results here.]}
-
+With synthetic times series, we validate \nufftcf for ACF against \pastas, a library  known in  groundwater time series analysis, and for CCF against \pyzdcf, known in  astronomical time series analysis. Benchmarks confirm the expected
+asymptotic scalings -- $O(n\log n)$ for \nufftcf versus $O(n^2)$ for
+\pastas slotting technique -- with \nufftcf already advantageous at
+moderate series lengths thanks to its low (millisecond-scale) overhead.
+On regularly-sampled data, \nufftcf dedicated FFT path
+further reduces both cost and overhead relative to its own NUFFT
+estimator. 
 \end{abstract}
+%
 \noindent
-
 \textbf{Keywords:} Time series analysis, Correlation function, Non-uniform Fast Fourier Transform
-
+%
 \vspace{1em} 
 \end{@twocolumnfalse} 
 ]
@@ -196,11 +102,6 @@ periodic, gappy input.
 \section{Introduction}
 \label{sec:introduction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%TODO JEC
-% voir les revues
-% https://www.diva-portal.org/smash/get/diva2:549963/FULLTEXT01.pdf
-% https://www.sciencedirect.com/science/article/abs/pii/S1051200409001298
-%
 Many measurements of physical, environmental, and astrophysical systems
 take the form of a scalar time series that is not regularly sampled in
 time. Ground-based photometric monitoring of active galactic nuclei (AGN)
@@ -217,9 +118,9 @@ instance in AGN reverberation mapping, where the CCF between a driving
 continuum light curve and a reprocessed emission-line light curve encodes
 the size of the emitting region \citep{2024HEAD...2110218W,asna.20210090,
 2021AJ....162..206S,2019MNRAS.485.4790S,2014AdSpR..54.1414K}, one uses the
- discrete correlation function \citep{1988ApJ...333..646E} and also for instance 
+ discrete correlation function \citep{edelson1988} and also for instance 
  the python version (\pyzdcf) of the code by 
- \cite{1997ASSL..218..163A}.
+ \cite{alexander97}.
 \footnote{\color{red} Description of other use-cases in Pastas and elsewhere.}
 
 Because the classical, textbook estimator of the ACF/CCF assumes a
@@ -256,7 +157,7 @@ kernel-weighted estimators in widest use (e.g.\ the Gaussian-kernel
 estimator used by the \pastas hydrogeological time-series
 package) from $O(n^2)$ to $O(n\log n)$. \nufftcf additionally
 provides direct, ``real-space'' implementations of the same estimators as
-an accuracy reference. All estimator families share a single
+a reference and still valuable for short time series. All estimator families share a single
 calling convention, so that a user can trade accuracy against speed
 without altering downstream analysis code.
 
@@ -264,10 +165,8 @@ The development of \nufftcf yields the following contributions:
 \begin{enumerate}
     \item We demonstrate that the Gaussian- and rectangle-kernel ACF/CCF estimators---previously established on statistical grounds \citep{Rehfeld2011}---can be reformulated as a pair of Non-Uniform Fast Fourier Transform (NUFFT) evaluations. This reformulation ensures numerical consistency with existing definitions while achieving an $O(n \log n)$ computational complexity.
     \item We introduce an $O(n)$ analytical algorithm, based on a two-pointer scan, to compute the effective pair count for normalizing each lag bin. This replaces the naive $O(n^2)$ all-pairs approach, significantly improving efficiency.
-    \item We validate \nufftcf through comparisons with \pastas \citep{collenteur2019} and \pyzdcf \citep{jankov2022pyzdcf} on synthetic ACF and CCF problems, and quantify the resulting speed-up.
+    \item We validate \nufftcf through comparisons with \pastas \citep{collenteur2019} and \pyzdcf \citep{jankov2022pyzdcf} on synthetic ACF and CCF problems.
 \end{enumerate}
-
-
 
 The paper is organized as follows.
 Section~\ref{sec:related_methodology} reviews prior approaches to ACF/CCF estimation for irregularly-sampled data,
@@ -276,10 +175,22 @@ Section~\ref{sec:comparison} compares \nufftcf to \pastas and \pyzdcf on ACF and
 Section~\ref{sec:benchmarks} presents timing benchmarks.
 Section~\ref{sec:discussion} discusses limitations and guidance on estimator choice, and Section~\ref{sec:conclusion} concludes.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Works and Methodology}
 \label{sec:related_methodology}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+This section is not intended as an exhaustive review of the correlation-function
+and spectral-estimation literature for irregularly-sampled data; several
+dedicated reviews already serve that purpose (e.g. \cite{Rehfeld2011} for
+kernel-weighted and interpolation-based estimators, \cite{BABU2010359} for
+Fourier-domain spectral-analysis methods). Rather, our aim here is
+methodological: we introduce, in the minimal form needed to motivate and
+formulate \nufftcf, the four broad families of approaches used in the
+literature to handle irregular sampling (Sections~\ref{sec:slotting}--\ref{sec:lombscargle}),
+before turning to the Non-Uniform Fast Fourier Transform
+(Section~\ref{sec:nufft}) and showing how it can be combined with
+kernel-weighted estimators to yield the \nufftcf approach
+(Section~\ref{sec:nufftcf_approach}).
 %
 \subsection{Correlation estimation on a regular grid: the Wiener--Khinchin theorem}
 \label{sec:wk_regular}
@@ -312,7 +223,7 @@ This FFT-based approach provides the regular-grid baseline for correlation estim
 %
 The earliest widely used approach specific to irregular sampling is the \textit{slotting} technique, introduced in astronomy by \cite{edelson1988} as the discrete correlation function (DCF). Slotting bins the products of pairs of (standardized) observations by their time-lag separation into fixed-width bins and averages within each bin. While simple and model-free, the resulting correlation-function estimate is not guaranteed to be positive semi-definite and may require post-processing \citep{Rehfeld2011}. This limitation has motivated the development of kernel-weighted techniques (Section~\ref{sec:kernel_estimators}).
 
-A refinement of the DCF, proposed by \cite{alexander1997} (ZDCF-transform), addresses the sparse, unevenly sampled light curves typical of AGN monitoring by using \textit{equal-population binning} rather than fixed-width bins. In this approach, bin boundaries are chosen adaptively so that each bin contains approximately an equal number of pairs. Additionally, a Fisher $z$-transform \citep{Fisher1915} is applied to stabilize the variance of the correlation estimate in each bin before computing confidence intervals. \pyzdcf \citep{jankov2022pyzdcf} is the reference Python implementation of ZDCF and remains the standard tool for CCF estimation in AGN reverberation-mapping studies. Both the DCF and ZDCF require a pairwise scan of the data, resulting in an $O(n^2)$ computational cost.
+A refinement of the DCF, proposed by \cite{alexander97} (ZDCF-transform), addresses the sparse, unevenly sampled light curves typical of AGN monitoring by using \textit{equal-population binning} rather than fixed-width bins. In this approach, bin boundaries are chosen adaptively so that each bin contains approximately an equal number of pairs. Additionally, a Fisher $z$-transform \citep{Fisher1915} is applied to stabilize the variance of the correlation estimate in each bin before computing confidence intervals. \pyzdcf \citep{jankov2022pyzdcf} is the reference Python implementation of ZDCF and remains the standard tool for CCF estimation in AGN reverberation-mapping studies. Both the DCF and ZDCF require a pairwise scan of the data, resulting in an $O(n^2)$ computational cost.
 %
 \subsection{Kernel-weighted estimators}
 \label{sec:kernel_estimators}
@@ -348,10 +259,27 @@ This methodology underpins the ACF estimator implemented in \pastas \citep{colle
 %
 \subsection{Lomb--Scargle-based (Fourier-domain) estimation}
 \label{sec:lombscargle}
-%
-A conceptually different approach, introduced by \cite{1976Ap&SS..39..447L,1982ApJ...263..835S} (see also \cite{1989ApJ...343..874S,2018ApJS..236...16V}), estimates the cross-correlation function by first computing the cross-spectrum via the Lomb--Scargle Fourier transform (LSFT). The LSFT is an irregular-sampling generalization of the DFT built from a least-squares sinusoid fit. The (cross-)periodogram is then formed, and an inverse Fourier transform is applied to the result, effectively applying the Wiener--Khinchin theorem in the Fourier domain rather than directly binning or weighting observation pairs in the lag domain.
 
-\cite{Rehfeld2011} found this approach competitive with kernel methods for univariate (ACF) problems but markedly worse for bivariate (CCF) problems. While the Lomb--Scargle method reuses the transform-multiply-invert idea of Section~\ref{sec:wk_regular}, it replaces the FFT with a nonuniform transform tailored to irregular sampling, with a computational cost of $O(n\,n_f)$ for $n_f$ frequencies.
+A conceptually different approach, introduced by
+\cite{1976Ap&SS..39..447L,1982ApJ...263..835S} (see also
+\cite{1989ApJ...343..874S,2018ApJS..236...16V}), estimates the
+cross-correlation function by first computing the cross-spectrum via the
+Lomb--Scargle Fourier transform (LSFT). The LSFT is an
+irregular-sampling generalization of the DFT built from a least-squares
+sinusoid fit. The (cross-)periodogram is then formed, and an inverse Fourier
+transform is applied to the result, effectively applying the
+Wiener--Khinchin theorem in the Fourier domain rather than directly binning
+or weighting observation pairs in the lag domain. More broadly, the LSFT is
+one instance of a wider family of Fourier-domain approaches to spectral
+analysis of nonuniformly-sampled data, comprehensively reviewed by
+\cite{BABU2010359}.
+
+\cite{Rehfeld2011} found this approach competitive with kernel methods for
+univariate (ACF) problems but markedly worse for bivariate (CCF) problems.
+While the Lomb--Scargle method reuses the transform-multiply-invert idea of
+Section~\ref{sec:wk_regular}, it replaces the FFT with a nonuniform transform
+tailored to irregular sampling, with a computational cost of $O(n\,n_f)$ for
+$n_f$ frequencies.
 %
 \subsection{The Non-Uniform Fast Fourier Transform}
 \label{sec:nufft}
@@ -462,7 +390,7 @@ analysis pipeline.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Comparison with pastas and pyZDCF}
 \label{sec:comparison}
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 We now validate \nufftcf against two widely used, independently
 implemented estimators --- \pastas (kernel-weighted, real-space,
 Section~\ref{sec:kernel_estimators}) and \pyzdcf (equal-population
@@ -1049,8 +977,10 @@ pointwise. This gives much higher lag resolution (Section~\ref{sec:comparison_cc
 but, unlike \pyzdcf, does not itself supply per-lag uncertainty estimates, which a
 user wanting formal error bars must still obtain externally (e.g., by bootstrap).
 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Summary and Conclusion}
 \label{sec:conclusion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 We have presented \nufftcf, an open-source Python package that
 evaluates the Gaussian- and rectangle-kernel ACF/CCF estimators of
@@ -1116,10 +1046,10 @@ We thank the developers of \texttt{FINUFFT}, \pastas, and
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\bibliographystyle{apsrev4-1}
-\bibliographystyle{aasjournal}
+\bibliographystyle{aasjournalv7}
 \bibliography{refs_nufftcf}
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix
 %%%%%%%%%%%%%%%%%%%%%%%%%%
