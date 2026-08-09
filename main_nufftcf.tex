@@ -111,17 +111,22 @@ deposited at a rate that itself varies with the climate signal being
 measured. A recurring analysis task for such data is to estimate the
 autocorrelation function (ACF) of a single series, or the
 cross-correlation function (CCF) between two independently and
-irregularly sampled series, at a set of time lags $\tau$. Applications
-range from measuring a characteristic variability or persistence
-timescale, to detecting a time delay between two related signals. For
-instance in AGN reverberation mapping, where the CCF between a driving
-continuum light curve and a reprocessed emission-line light curve encodes
-the size of the emitting region \citep{2024HEAD...2110218W,asna.20210090,
-2021AJ....162..206S,2019MNRAS.485.4790S,2014AdSpR..54.1414K}, one uses the
- discrete correlation function \citep{edelson1988} and also for instance 
- the python version (\pyzdcf) of the code by 
- \cite{alexander97}.
-\footnote{\color{red} Description of other use-cases in Pastas and elsewhere.}
+irregularly sampled series, at a set of time lags $\tau$.
+
+Applications range from measuring a characteristic variability or
+persistence timescale, to detecting a time delay between two related
+signals. For instance in AGN reverberation mapping, where the CCF between
+a driving continuum light curve and a reprocessed emission-line light
+curve encodes the size of the emitting region
+\citep{2024HEAD...2110218W,asna.20210090,2021AJ....162..206S,
+	2019MNRAS.485.4790S,2014AdSpR..54.1414K}, one uses the discrete
+correlation function \citep{edelson1988}, and also for instance the
+python version (\pyzdcf) of the code by \cite{alexander97}. A comparable
+need arises in hydro(geo)logical time series analysis: the open-source
+Python package Pastas \citep{collenteur2019}, widely used for time series
+modeling of groundwater levels, implements an ACF estimator for
+irregularly sampled series based on \cite{Rehfeld2011} and
+\cite{edelson1988}.
 
 Because the classical, textbook estimator of the ACF/CCF assumes a
 common, regular sampling grid \citep[e.g.][]{astsa2026}, irregular sampling has historically been
@@ -151,11 +156,7 @@ large numbers of light curves or well records).
 
 In this paper we present \nufftcf, an open-source Python package
 that computes ACF/CCF estimates by evaluating the Wiener--Khinchin theorem with the
-Non-Uniform Fast Fourier Transform (NUFFT) and classical-FFT for irregularly- and regularly-sampled
-time series respectively. This leads to the cost reduction of the
-kernel-weighted estimators in widest use (e.g.\ the Gaussian-kernel
-estimator used by the \pastas hydrogeological time-series
-package) from $O(n^2)$ to $O(n\log n)$. \nufftcf additionally
+Non-Uniform Fast Fourier Transform (NUFFT) and classical-FFT for irregularly- and regularly-sampled time series respectively. \nufftcf additionally
 provides direct, ``real-space'' implementations of the same estimators as
 a reference and still valuable for short time series. All estimator families share a single
 calling convention, so that a user can trade accuracy against speed
@@ -326,7 +327,7 @@ $b_k(\cdot)$ of Equation~\ref{eq:gaussian_kernel}. We return below to the distin
 \subsection{From kernel-weighted estimators to NUFFT: the nufftcf approach}
 \label{sec:nufftcf_approach}
 %
-\nufftcf's central observation is that the kernel-weighted
+\nufftcf central observation is that the kernel-weighted
 estimator of Equation~\ref{eq:kernel_estimator} can be evaluated via
 Wiener--Khinchin using a NUFFT, rather than via a direct pairwise sum,
 whenever the weighting kernel $b_k(\cdot)$ is itself expressible as (or well
@@ -347,7 +348,7 @@ are. Concretely, \nufftcf:
 Algorithms~\ref{alg:ccf-nufft}--\ref{alg:acf-nufft} in
 Appendix~\ref{app:algorithms} give the complete pseudocode of the CCF and
 ACF estimators, respectively, and Appendix~\ref{app:finufft-notes}
-details the implementation choices dictated by \texttt{FINUFFT}'s
+details the implementation choices dictated by \texttt{FINUFFT}
 conventions (domain mapping, sign convention, oversampling factor $N_1$,
 and the interior-lag normalization used to avoid an edge-smoothing
 bias). The total cost of evaluating the correlation function at $K$
@@ -818,10 +819,10 @@ moderately sized series, well before reaching the asymptotic regime.
 	\renewcommand{\arraystretch}{0.95}
 	\setlength{\tabcolsep}{5pt}
 	\caption{Fit results for irregularly- and regularly-sampled data.
-		\pastas{} gaussian/rectangle bin methods and \nufftcf{} nufft
+		\pastas gaussian/rectangle bin methods and \nufftcf nufft
 		path follow $a\,n^2$ and $a\,n\ln(n)$ (resp.) $+\ \text{overhead}$;
-		\pastas{} \texttt{"regular"} bin method follows $a\,n +
-		\text{overhead}$; \nufftcf{} fft path follows $a\,n\ln(n) +
+		\pastas \texttt{"regular"} bin method follows $a\,n +
+		\text{overhead}$; \nufftcf fft path follows $a\,n\ln(n) +
 		\text{overhead}$.}
 	\label{tab:fit_results}
 	\begin{tabular}{lllrrr}
@@ -893,8 +894,8 @@ Figure~\ref{fig:acf_regular_bench}. The dedicated FFT path is markedly
 faster than NUFFT on regular data (e.g.\ for the gaussian kernel, its
 leading coefficient $a$ is $\sim$65$\times$ smaller and its overhead
 $\sim$30$\times$ lower), and, like the NUFFT path on irregular data,
-retains an $O(n\log n)$ advantage over \pastas{}'s $O(n^2)$
-gaussian/rectangle bin methods -- including over \pastas{}'s own $O(n)$
+retains an $O(n\log n)$ advantage over \pastas $O(n^2)$
+gaussian/rectangle bin methods -- including over \pastas own $O(n)$
 \texttt{"regular"} bin method, whose much larger leading coefficient
 outweighs its more favorable scaling.
 
@@ -988,10 +989,22 @@ statistical grounding of the underlying estimator.
 Future work may include extending \nufftcf uncertainty quantification
 beyond the deterministic effective pair count $b$ following \pyzdcf own
 approach, exploring additional weighting kernels within the same
-NUFFT reformulation. An other kind of extension may be guided 
+NUFFT reformulation. An other kind of extension may be guided
 by the GPU version of \texttt{FINUFFT} \citep{cuFINUFFT2021}  for
 the very largest ($n\gtrsim10^6$) time series that may emerge from
-continuous environmental and astronomical monitoring.
+continuous environmental and astronomical monitoring. 
+
+Finally, while
+the validation and benchmarks presented in this article rely on synthetic series
+with known, controlled statistical properties, the ultimate test of
+\nufftcf practical utility lies in its application to real-world
+data. Tests by the AGN reverberation-mapping community currently
+served by \pyzdcf, and by hydrogeologists relying on \pastas for
+groundwater time series analysis, would expose \nufftcf to
+observational irregularities --- gaps, heteroscedastic noise, and
+non-stationary sampling --- that synthetic series may not fully
+capture, and would constitute a valuable complement to the synthetic
+validation performed in this work.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Reproducible Research}
@@ -1005,7 +1018,7 @@ this article. The code is also available as a PyPI package at
 is available at \url{https://jecampagne.github.io/nufftcf/}.
 
 We have used \pastas 1.14.0, while concerning \pyzdcf we have made a fork of the \url{https://github.com/LSST-sersag/pyzdcf} repository to allow the notebooks to be run
-on the Google Colab plateform \citep{googlecolab}.   
+on the Google Colab plateform\footnote{\url{https://colab.research.google.com/}}.   
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Large Language Model Use Disclosure}
@@ -1230,7 +1243,7 @@ because $x$ is correlated with itself.
 Algorithms~\ref{alg:ccf-nufft}--\ref{alg:acf-nufft} rely on the
 \texttt{FINUFFT} library for both nonuniform transforms (\texttt{nufft1d1},
 type~1, and \texttt{nufft1d2}, type~2). Several implementation choices
-follow directly from this library's constraints and conventions. We
+follow directly from this library  constraints and conventions. We
 detail them here, complementing the $O(n)$-per-lag \texttt{numba}
 kernels of Appendix~\ref{app:pair-count}.
 %
