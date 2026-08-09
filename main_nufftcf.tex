@@ -8,6 +8,7 @@
 \usepackage{textgreek}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
+\usepackage{aas_macros}
 
 \usepackage{hyperref}
 \hypersetup{
@@ -39,28 +40,27 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-% mes definitions
+
+
+% my definitions
 \newcommand{\bmtx}[1]{\mathbf{#1}}
 \DeclareMathOperator{\sinc}{sinc}
 \newcommand{\nufftcf}{\texttt{nufftcf}\xspace}
 \newcommand{\pastas}{\texttt{pastas}\xspace}
 \newcommand{\pyzdcf}{\texttt{pyZDCF}\xspace}
 
+% figure directory
 \graphicspath{ {./figs/} }
 
-\usepackage{comment}
-%%%%%%
-\usepackage{aas_macros}
-%%%%%%
-
+%%%%%%%%%%%%%%%%%%%%%%%
 \title{nufftcf: Fast Auto- and Cross-Correlation Function Estimation for
 	Irregularly-Sampled Time Series via the Non-Uniform FFT}
 \author{Jean-Eric Campagne\orcidlink{0000-0002-1590-6927}}
 \affil{Universit\'e Paris-Saclay, CNRS/IN2P3, IJCLab, 91405 Orsay, France \\ \texttt{jean-eric.campagne@ijclab.in2p3.fr}}
 \date{\today}
-
-%%%%%%
-
+%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
 \begin{document}
 \twocolumn[ \begin{@twocolumnfalse}
 \maketitle
@@ -591,12 +591,10 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 		Equation~\ref{eq:ou_theory_ccf}.}
 	\label{fig:ccf_ou}
 \end{figure*}
-
 %
 \subsection{Cross-correlation: nufftcf vs pyZDCF\\ (coupled OU-processes)}
 \label{sec:comparison_ccf_ouproc}
 %
-
 \begin{table*}
 	\centering
 	\caption{Comparison of cross-correlation peaks for different values of $\rho$.}
@@ -754,7 +752,7 @@ bandwidth reducing per-lag variance at the cost of resolution or to
 calibrate and subtract the selection bias via a bootstrap/Monte-Carlo
 procedure on surrogate data, analogous to the internal Monte-Carlo
 simulations used by \pyzdcf for its own uncertainty estimates.
-
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Timing Benchmarks}
 \label{sec:benchmarks}
@@ -813,25 +811,6 @@ benefit in practice, not just in principle -- with the small residual
 overhead (a few milliseconds) making \nufftcf advantageous already for
 moderately sized series, well before reaching the asymptotic regime.
 
-\begin{comment}
-\begin{table*}
-	\centering
-	\caption{Fit results for irregularly-sampled data. \pastas follows
-		$a\,n^2 + \text{overhead}$, \nufftcf follows
-		$a\,n\ln(n) + \text{overhead}$.}
-	\label{tab:fit_irregular_old}
-	\begin{tabular}{llrrr}
-		\toprule
-		Kernel & Algorithm & $a$ & Overhead [ms] & $R^2$ \\
-		\midrule
-		gaussian  & \pastas  & $(4.744\pm0.002)\times10^{-8}$ & $17.32\pm1.04$ & 1.00 \\
-		gaussian  & \nufftcf & $(1.370\pm0.033)\times10^{-6}$ & $2.17\pm0.59$  & 1.00 \\
-		rectangle & \pastas  & $(5.448\pm0.004)\times10^{-8}$ & $3.08\pm0.88$  & 1.00 \\
-		rectangle & \nufftcf & $(4.712\pm0.230)\times10^{-7}$ & $1.71\pm0.30$  & 0.98 \\
-		\bottomrule
-	\end{tabular}
-\end{table*}
-\end{comment}
 
 \begin{table*}
 	\centering
@@ -888,11 +867,9 @@ moderately sized series, well before reaching the asymptotic regime.
 		gaussian kernel.}
 	\label{fig:acf_regular_bench}
 \end{figure*}
-
-
-
+%
 \subsection{Regularly-sampled data}
-
+%
 When the data lie on a uniform grid, there is no need to pay for the
 generality of a NUFFT: \nufftcf also provides a dedicated classic-FFT
 path (\texttt{fft\_acf.py}) that reproduces the exact same
@@ -1029,15 +1006,16 @@ is available at \url{https://jecampagne.github.io/nufftcf/}.
 
 We have used \pastas 1.14.0, while concerning \pyzdcf we have made a fork of the \url{https://github.com/LSST-sersag/pyzdcf} repository to allow the notebooks to be run
 on the Google Colab plateform \citep{googlecolab}.   
-
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Large Language Model Use Disclosure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-For the development of \nufftcf, we used the free version of Claude Desktop by Anthropic (Sonnet 5\footnote{\url{https://www.anthropic.com/news/claude-sonnet-5}.}, Moyen) to elaborate the Python project and set up the workflow for GitHub continuous integration and systematic tests. We also used it to assist in writing the README and documenting the notebooks and Python functions.
+For the development of \nufftcf, we used the free version of Claude Desktop by Anthropic (Sonnet 5\footnote{\url{https://www.anthropic.com/news/claude-sonnet-5}.}, Moyen) to elaborate the Python project and set up the workflow for GitHub continuous integration and systematic tests. We also used it to assist in writing the README and documenting the notebooks and Python functions as well as their transcriptions into Latex algorithms. 
 
 We also used Le Chat CNRS Enterprise, an AI-powered language model developed by Mistral AI\footnote{\url{https://mistral.ai}} and tailored to the research needs of the National Centre for Scientific Research (CNRS), to refine the clarity and fluency of the English text.
 
 All AI-generated suggestions were carefully reviewed and validated by the author.
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Acknowledgments}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1166,11 +1144,10 @@ The interior-position trick of Algorithm~\ref{alg:acf-scale0} is unnecessary her
 	$b \gets b_{\mathrm{eval}}[2{:}]$\;
 	\Return{$c,b$}
 \end{algorithm*}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 \subsection{Effective pair count algorithms}
 \label{app:pair-count}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 The pair-count functions $b(\cdot)$ (module \texttt{kernels.py}) are
 presented in Algorithms~\ref{alg:b-generic}-\ref{alg:b-rect-generic}. Each
 algorithm computes the \textit{effective} number of pairs contributing
@@ -1246,18 +1223,17 @@ because $x$ is correlated with itself.
 	\small $\bullet$ \textbf{ACF:} $t^{y}{=}t^{x}{=}t$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle}.\quad
 	$\bullet$ \textbf{CCF:} $t^{y}{=}s$, $t^{x}{=}t$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_rectangle\_cross}.
 \end{algorithm*}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 \subsection{Implementation choices dictated by FINUFFT}
 \label{app:finufft-notes}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 Algorithms~\ref{alg:ccf-nufft}--\ref{alg:acf-nufft} rely on the
 \texttt{FINUFFT} library for both nonuniform transforms (\texttt{nufft1d1},
 type~1, and \texttt{nufft1d2}, type~2). Several implementation choices
 follow directly from this library's constraints and conventions. We
 detail them here, complementing the $O(n)$-per-lag \texttt{numba}
 kernels of Appendix~\ref{app:pair-count}.
-
+%
 \paragraph{\bf Time domain $[0,2\pi)$.}
 \texttt{FINUFFT} requires nonuniform points to lie in the standard
 domain $[-\pi,\pi)$ or $[0,2\pi)$, so the user-supplied sample times
@@ -1352,8 +1328,9 @@ the peak --- a concrete example of a numerical-pipeline artifact (not a
 property of the underlying signal) that must be neutralized by how the
 evaluation array is constructed, rather than corrected \textit{a
 posteriori}.
-
+%
 \paragraph{\bf Prior standardization.}
+%
 Both $x$ and $y$ are standardized (zero mean, unit variance) before any
 call to \texttt{FINUFFT}. This is not dictated by \texttt{FINUFFT}
 itself, but ensures that the NUFFT internal scale (which depends on
@@ -1362,5 +1339,5 @@ combined with the final division by
 $\sqrt{\mathrm{ACF}_x(0)\cdot\mathrm{ACF}_y(0)}$, it guarantees
 $c\in[-1,1]$ under the Pearson convention, regardless of the original
 physical scale of either series.
-
+%
 \end{document}
