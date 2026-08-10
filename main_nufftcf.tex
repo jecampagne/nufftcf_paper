@@ -260,7 +260,7 @@ This methodology underpins the ACF estimator implemented in \pastas \citep{colle
 %
 \subsection{Lomb--Scargle-based (Fourier-domain) estimation}
 \label{sec:lombscargle}
-
+%
 A conceptually different approach, introduced by
 \cite{1976Ap&SS..39..447L,1982ApJ...263..835S} (see also
 \cite{1989ApJ...343..874S,2018ApJS..236...16V}), estimates the
@@ -280,7 +280,10 @@ univariate (ACF) problems but markedly worse for bivariate (CCF) problems.
 While the Lomb--Scargle method reuses the transform-multiply-invert idea of
 Section~\ref{sec:wk_regular}, it replaces the FFT with a nonuniform transform
 tailored to irregular sampling, with a computational cost of $O(n\,n_f)$ for
-$n_f$ frequencies.
+$n_f$ frequencies. In practice, this transform can itself be evaluated efficiently via a
+non-uniform FFT (NUFFT), following the approach of \cite{Garrison2024},
+which uses the same NUFFT library (FINUFFT) as \nufftcf, as described in the next
+section.
 %
 \subsection{The Non-Uniform Fast Fourier Transform}
 \label{sec:nufft}
