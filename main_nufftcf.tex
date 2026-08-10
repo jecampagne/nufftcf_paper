@@ -765,14 +765,13 @@ regularly-sampled data. \pyzdcf was excluded from this comparison: its $O(n^2)$ 
 correlation, combined with a Monte-Carlo error estimate, makes it
 prohibitively slow for series of the lengths considered here --
 unsurprising, since \pyzdcf was designed to prioritize
-error estimation over computational speed.
+error estimation over computational speed. 
 
 Benchmarks are restricted to ACF, rather than CCF, for two reasons:
 first, this allows a direct comparison against \pastas, which only
 implements ACF; second, within \nufftcf itself, CCF and ACF share the
 same computational cost, since both are driven by the same NUFFT calls
 and the same $b$-factor (pair-count normalization) computation.
-
 
 For each configuration, computation time was measured over several
 repeats per series length, with execution order randomized across
@@ -790,7 +789,9 @@ uncertainties were obtained by bootstrapping over the recorded repeats
 (500 iterations): at each iteration, repeats at every series length are
 resampled with replacement, the point estimate is recomputed, and the
 model is refit; the standard deviation of the refit parameters across
-iterations gives the reported uncertainty.
+iterations gives the reported uncertainty. 
+
+For the sake of completeness and reproducibility, we detailthe exact hardware configuration used to conduct the benchmarks: this is a MacBook Pro (2020) equipped with a 2 GHz Intel Core i5 processor (quad-core), 512 KB of L2 cache per core, and 6 MB of shared L3 cache, along with 16 GB of LPDDR4X RAM (3733 MHz, dual-channel, 8 GB per channel), running macOS 26.5.2 (build 25F84).
 %
 \subsection{Irregularly-sampled data}
 %
