@@ -455,7 +455,22 @@ without access to \pastas:
 	(Figure~\ref{fig:ccf_tau0}) to check that the recovered peak location
 	tracks the injected delay.
 	\item Coupled Ornstein--Uhlenbeck (OU) processes with variable
-		$\rho$. Two independent latent OU-like processes $e_1(t)$,
+		$\rho$. Two independent latent OU-like processes\footnote{Concretely, each process is built by causally filtering
+			unit-variance white noise $\eta_t\sim\mathcal N(0,1)$ through a
+			discrete exponential kernel, $e_t \propto \sum_{k\geq 0}
+			e^{-k/\alpha}\,\eta_{t-k}$, truncated after a $200$-day burn-in
+			(negligible relative to $\alpha=10$~d) and rescaled to unit variance.
+			Since $e^{-k/\alpha}$ is geometric, this sum telescopes exactly into
+			the AR(1) recursion $e_t = \phi\, e_{t-1} + \eta_t$ with
+			$\phi=e^{-1/\alpha}$. This is the exact (not Euler--Maruyama)
+			discretisation of the OU Stochastic Differential Equation $dX = -\theta X\,dt + \sigma\,dW$,
+			$\theta=1/\alpha$, at unit time step, with innovation variance
+			$\sigma^2(1-e^{-2\theta})/(2\theta)=1$, i.e.\
+			$\sigma=\sqrt{2\theta/(1-e^{-2\theta})}$, so that $\eta_t$ matches the
+			unit-variance driving noise above. The resulting process is
+			stationary with autocorrelation $e^{-|\tau|/\alpha}$ up to the
+			burn-in transient, which is what underlies
+			Equation~\eqref{eq:ou_theory_ccf}.} $e_1(t)$,
 	$e_2(t)$ are generated with the same exponential-kernel construction
 	as \texttt{STS\_EXP} ($\alpha=10$~d), and combined as
 	\begin{align}
