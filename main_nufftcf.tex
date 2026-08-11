@@ -572,7 +572,7 @@ than of either estimator.
 
 Figure~\ref{fig:zdcf_sin_exp} repeats the comparison against \texttt{pyzdcf}. The \texttt{nufftcf} Gaussian and rectangle estimates, which closely follow the analytical ACF, agree with the \texttt{pyzdcf} points (within their Monte-Carlo error bars) wherever the two methods are directly comparable. The main qualitative differences are in resolution and computational cost: \texttt{nufftcf} returns a value at every requested lag for these series (e.g., $365$ points) in at most a few hundred milliseconds, whereas \texttt{pyzdcf} returns only $\sim 300$--$500$ equal-population bins (even fewer for the coarser $\mathrm{minpts}=25$ setting) and requires several seconds per series. These timing differences are driven by \texttt{pyzdcf} $O(n^2)$ pairwise scan and Monte Carlo error resampling, compared to \texttt{nufftcf} $O(n \log n)$ NUFFT evaluation.
 %
-\subsection{Cross-correlation: nufftcf vs pyZDCF\\ (\texttt{STS\_SIN/EXP} series)}
+\subsection{Cross-correlation: nufftcf vs pyZDCF (\texttt{STS\_SIN/EXP} series)}
 \label{sec:comparison_ccf}
 %
 Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp case for the \texttt{STS\_SIN} and \texttt{STS\_EXP} series, respectively. The \nufftcf Gaussian-kernel estimate is compared against its real-space reference (left panels) and its rectangle-kernel estimate (right panels). In both panels, the \pyzdcf estimate is also displayed. The three \nufftcf variants agree essentially exactly with one another, and all three also agree with the \pyzdcf sparser set of binned points within its error bars. Additionally, they correctly locate the CCF peak at the injected delay $\tau=\tau_0$. Figure~\ref{fig:ccf_tau0} confirms that this peak recovery is robust as $\tau_0$ is varied over $\{20, 60, 120\}$~d, exemplified for the \texttt{STS\_EXP} series: both \nufftcf and \pyzdcf recover peaks consistent with the true delay (marked by the vertical dashed line), with the \nufftcf continuous curve making the peak location and shape considerably easier to read off than the \pyzdcf handful of bins per panel.
@@ -666,7 +666,15 @@ $\mathrm{lag}=167$~d (\nufftcf and real-space Gaussian alike) or $178.7$~d
 signal-to-noise ratio of the theoretical CCF is too low for the physical
 peak to reliably dominate the estimated cross-correlation function, so the
 global maximum is instead captured by a noise fluctuation rather than by the
-expected physical peak.
+expected physical peak. As a further check of this interpretation, we repeated the coupled OU-process experiment with the total baseline extended by a factor of ten (from
+$3650$ to $36\,500$~d, i.e. ten times more sampled points at
+comparable cadence), keeping all other parameters unchanged. With this
+larger sample, \nufftcf (both kernels) and the real-space Gaussian estimator
+recover $\mathrm{lag}=\tau_0=60$~d even at $\rho=0.1$.
+The interpretation is as the number of pairs contributing to each lag
+bin grows, the per-lag noise floor drops, the physical peak emerges above it,
+and the global maximum of the estimated CCF converges onto the true lag
+$\tau_0$.
 %
 \subsubsection{Peak amplitude}
 %
@@ -753,6 +761,7 @@ constant across $\rho$ ($\approx0.038$--$0.051$) for all three estimators,
 consistent with a signal-independent noise floor set by sampling and kernel
 bandwidth. 
 
+
 Second, $\Delta/\mathrm{std\_far}$ is of order unity at
 weak-to-moderate coupling ($\approx0.9$--$1.2$ at $\rho=0.2$--$0.5$) -- the
 peak bias is comparable to the background noise, exactly as expected when
@@ -764,6 +773,20 @@ bias-to-noise ratio at every $\rho$, consistent with its sharper effective
 bandwidth producing a noisier per-lag estimate, while real-space and
 \texttt{nufftcf} Gaussian remain statistically indistinguishable, confirming
 a kernel-choice effect rather than an implementation artifact.
+
+This sample-size dependence can also be verified directly. Repeating the
+experiment with a ten-fold longer baseline ($36\,500$ instead of $3650$~d)
+markedly reduces $|\Delta|$ at every tested $\rho$, for all three
+estimators: e.g.\ $\Delta=-0.030$/$-0.027$/$-0.029$ at $\rho=0.2$ (versus
+$+0.055$/$+0.058$/$+0.056$ in the fiducial run) and $-0.008$/$-0.001$/$-0.003$
+ at $\rho=0.95$ (versus $+0.012$/$+0.023$/$+0.007$), confirming that
+the bias shrinks as the per-lag noise floor drops with increasing sample
+size. Notably, the residual at this larger sample size turns slightly
+\emph{negative} for every estimator, and is consistently less negative for
+the rectangle kernel than for the Gaussian kernel -- the same ordering seen
+in the selection-bias-dominated regime -- suggesting that once the selection
+bias is suppressed, a small residual smoothing bias from averaging the
+sharply peaked CCF over a finite kernel bandwidth becomes visible instead.
 
 A natural mitigation, in both implementations (real space or NUFFT-based \nufftcf computatiions), 
 would be to widen the kernel
@@ -964,10 +987,13 @@ order the background noise level of the estimate
 (Table~\ref{tab:bias_vs_background}, Figure~\ref{fig:ccf_ou}). 
 This is a
 property of maximizing over many noisy per-lag estimates, not a
-NUFFT-specific artifact (Section~\ref{sec:overestimation_peak_ampl}), 
-and is best addressed by widening $h$ or by a
-bootstrap/Monte-Carlo calibration of the bias on surrogate data, in the
-spirit of \pyzdcf own internal resampling. 
+NUFFT-specific artifact (Section~\ref{sec:overestimation_peak_ampl}), and it
+shrinks as the sampling density increases: a ten-fold larger sample already
+reduces the bias by a factor of a few and leaves only a small residual
+smoothing bias from averaging the CCF over a finite kernel bandwidth $h$. It
+is best addressed by increasing the number of sampled points where
+possible, by widening $h$, or by a bootstrap/Monte-Carlo calibration of the
+bias on surrogate data, in the spirit of \pyzdcf own internal resampling. 
 Second, in contrast to \pyzdcf, which uses coarser, data-adaptive
 equal-population bins, \nufftcf uses a dense, user-chosen lag grid evaluated
 pointwise. This gives much higher lag resolution (Section~\ref{sec:comparison_ccf})
