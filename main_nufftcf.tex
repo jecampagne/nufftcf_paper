@@ -173,6 +173,7 @@ The paper is organized as follows.
 Section~\ref{sec:related_methodology} reviews prior approaches to ACF/CCF estimation for irregularly-sampled data,
 situates \nufftcf relative to them, and details the methodology, from the regularly-sampled case through the four established families of irregular-sampling estimators to the NUFFT reformulation used by \nufftcf.
 Section~\ref{sec:comparison} compares \nufftcf to \pastas and \pyzdcf on ACF and CCF use cases.
+Section~\ref{sec:astro_example} illustrates \nufftcf on a simulated astrophysical light curve closer to observational practice.
 Section~\ref{sec:benchmarks} presents timing benchmarks.
 Section~\ref{sec:discussion} discusses limitations and guidance on estimator choice, and Section~\ref{sec:conclusion} concludes.
 
@@ -793,7 +794,186 @@ would be to widen the kernel
 bandwidth reducing per-lag variance at the cost of resolution or to
 calibrate and subtract the selection bias via a bootstrap/Monte-Carlo
 procedure on surrogate data, analogous to the internal Monte-Carlo
-simulations used by \pyzdcf for its own uncertainty estimates.
+simulations used by \pyzdcf for its own uncertainty estimates. Section~\ref{sec:astro_mc}
+revisits this same diagnosis -- a single-realization deviation mistaken for a
+bias -- on an independently-motivated, physical use case, using repeated
+realizations rather than a longer baseline to demonstrate it.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{A Worked Example on a Simulated Astrophysical Light Curve}
+\label{sec:astro_example}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The synthetic series of Section~\ref{sec:comparison} were designed to
+isolate ACF/CCF estimator behaviour under simple, well-controlled
+statistical models, so as to enable a quantitative, independent
+cross-check against \pastas and \pyzdcf. To illustrate \nufftcf on a
+case closer to observational practice, we simulate a single stellar
+photometric light curve combining a quasi-periodic rotation signal,
+correlated ``flicker'' noise, realistic ground-based sampling gaps,
+and heteroscedastic measurement noise, and use \nufftcf alone to recover the injected
+rotation period and noise correlation time.\footnote{See
+\texttt{nufftcf\_astro\_demo.ipynb} notebook.}
+%
+\subsection{Simulated light curve}
+\label{sec:astro_model}
+%
+The latent flux is
+\begin{equation}
+y(t) = A(t)\cos\!\left(\frac{2\pi t}{P_{\rm rot}}+\varphi\right) + n(t),
+\label{eq:astro_model}
+\end{equation}
+where $\varphi$ is a random phase, uniform on $[0,2\pi)$ and
+independent of $A(t)$; $A(t)$ is a stationary Ornstein--Uhlenbeck (OU)
+process of mean $A_0$, variance $\sigma_A^2$, and correlation time
+$\tau_A \gg P_{\rm rot}$, modelling slow spot evolution; and $n(t)$ is
+an independent OU process of variance $\sigma_n^2$ and correlation
+time $\tau_n$, modelling short-timescale correlated (flicker/granulation)
+noise. The normalized autocorrelation of $y(t)$ is then analytic,
+\begin{equation}
+\rho_{\rm true}(\tau) = \frac{\tfrac12\cos\!\left(\frac{2\pi\tau}{P_{\rm rot}}\right)\left(\sigma_A^2 e^{-|\tau|/\tau_A}+A_0^2\right) + \sigma_n^2 e^{-|\tau|/\tau_n}}{\tfrac12(\sigma_A^2+A_0^2)+\sigma_n^2},
+\label{eq:astro_acf_true}
+\end{equation}
+and has the form of a sum of an exponentially damped cosine and an exponential decay, closely related to the stochastically driven damped harmonic oscillator (SHO) kernels of the celerite family \citep{ForemanMackey2017}, which have been used to model stellar rotation \citep[e.g.][]{Angus2018} and granulation/flicker noise in a similar decomposition. It is qualitatively similar in spirit, though not identical in functional form, to the product-form quasi-periodic kernels (squared-exponential times periodic) commonly used in  Gaussian-process models of stellar activity \citep[e.g.][]{Rajpaul2015}. We use $P_{\rm rot}=12$~d, $A_0=1$, $\sigma_A=0.35$,
+$\tau_A=220$~d, $\sigma_n=0.55$, $\tau_n=3.5$~d. Both $A(t)$ and $n(t)$
+are simulated directly at the (irregular) observation epochs using the
+exact OU transition kernel, so no dense-grid discretization is needed.
+
+Ground-based sampling is emulated over four years with one nightly
+epoch, an $\sim$8-month seasonal observability window, and $25\%$ of
+otherwise-observable nights lost to weather, yielding a fiducial
+realization of $n=762$ irregular epochs (median cadence $1.0$~d within
+a season). Each point additionally carries a heteroscedastic
+measurement uncertainty $\sigma_i$, growing toward the edges of the
+observing season (higher airmass), with $\sigma_i \in [0.07, 0.43]$~d
+(median $0.18$) for this parameter choice; the observed flux is
+$x_{\rm obs}(t_i)=y(t_i)+\varepsilon_i$, $\varepsilon_i\sim\mathcal
+N(0,\sigma_i^2)$. Figure~\ref{fig:astro_lightcurve} shows the
+resulting light curve.
+%
+\begin{figure}
+\centering
+\includegraphics[width=\columnwidth]{astro_lightcurve.pdf}
+\caption{Simulated ground-based light curve (top; error bars show
+$\sigma_i$) combining stellar-rotation modulation, correlated OU
+noise, seasonal/weather gaps, and heteroscedastic measurement noise
+(bottom).}
+\label{fig:astro_lightcurve}
+\end{figure}
+%
+\subsection{ACF recovery}
+\label{sec:astro_acf}
+%
+We compute the ACF with \nufftcf Gaussian-kernel real-space and
+NUFFT estimators ($\mathrm{bin\_width}=0.5$~d) on $x_{\rm obs}$, at
+every integer lag from 1 to 49~d. Since \nufftcf standardizes the
+series before evaluating $\hat\rho$, and the measurement noise only
+contributes at lag-0 (known as ``nugget'' effect \citep[e.g.][]{Sayer2020} or ``zero-lag'' spike \citep[e.g.][]{Lacki:2025yrx}), the observed ACF is a rescaled version
+of Equation~\ref{eq:astro_acf_true}: $\rho_{\rm obs}(\tau) =
+\kappa\,\rho_{\rm true}(\tau)$, with dilution factor 
+\begin{align}
+\kappa &= \mathrm{Cov}_{\rm tot}(0)/\mathrm{Var}(x_{\rm obs}) \nonumber \\
+&= 
+\mathrm{Cov}_{\rm tot}(0)/(\mathrm{Cov}_{\rm tot}(0)+\langle\sigma_i^2\rangle) < 1.
+\end{align}
+Figure~\ref{fig:astro_acf} compares the two \nufftcf estimates to
+$\rho_{\rm true}$ for the fiducial realization. Both agree closely
+with the theoretical curve and with each other: RMSE $=0.027$
+for real-space, $0.040$ for NUFFT, against $\rho_{\rm true}$, i.e.\ without
+correcting for the dilution factor above. The rotation-driven
+oscillation and the fast initial decay from the flicker noise are both
+clearly resolved despite the seasonal gaps and the heteroscedastic
+noise.
+%
+\begin{figure}
+\centering
+\includegraphics[width=\columnwidth]{astro_ACF_nufft.pdf}
+\caption{ACF recovered by \nufftcf Gaussian real-space and NUFFT
+estimators from the sparse, heteroscedastic light curve of
+Figure~\ref{fig:astro_lightcurve}, against the theoretical
+latent-process ACF (Equation~\ref{eq:astro_acf_true}).}
+\label{fig:astro_acf}
+\end{figure}
+%
+\subsection{Recovering the rotation period and noise timescale}
+\label{sec:astro_fit}
+%
+We extract two physical quantities from the recovered ACF: the
+rotation period $P_{\rm rot}$, taken as the lag of the ACF maximum in
+a search window around the injected value, and the flicker-noise
+correlation time $\tau_n$, obtained by fitting the short-lag ($\le
+14$~d) ACF to a two-component model,
+\begin{equation}
+\hat\rho(\tau) = \kappa\left[w\cos\!\left(\frac{2\pi\tau}{P_{\rm rot}}\right) + (1-w)\,e^{-\tau/\tau_n}\right],
+\label{eq:astro_fit_model}
+\end{equation}
+with free parameters $(w, \tau_n, P_{\rm rot}, \kappa)$. Note that a naive
+single-exponential decay does not fit this range, since $P_{\rm
+rot}=12$~d is not slowly varying compared to the fitted lags. The
+explicit dilution factor $\kappa$ is required in
+Equation~\ref{eq:astro_fit_model}: without it, the fit compensates for
+the noise-induced amplitude deficit at $\tau>0$ by biasing $\tau_n$
+low, since $\hat\rho$ would otherwise be pinned to $1$ at $\tau=0$ by
+construction.
+
+For the fiducial realization, the ACF peak search recovers $P_{\rm
+rot}=12.00$~d exactly (injected: $12.00$~d) for both estimators. The
+composite fit gives $\tau_n=4.09\pm0.38$~d (real-space) and
+$4.16\pm0.38$~d (NUFFT), compared to the injected $\tau_n=3.5$~d, and
+$\kappa=0.938\pm0.019$ and $0.940\pm0.020$ respectively, in agreement
+with an independent, fit-free estimate $\kappa_{\rm
+est}=1-\langle\sigma_i^2\rangle/\mathrm{Var}(x_{\rm obs})=0.954$
+obtained directly from the data.
+%
+\subsection{Monte-Carlo over independent realizations}
+\label{sec:astro_mc}
+%
+Taken at face value, the single-realization $\tau_n$ fit above
+($\sim4.1$~d) sits above the injected value ($3.5$~d) by more than its
+formal uncertainty, suggestive of a residual bias -- reminiscent of
+the CCF peak-amplitude offsets identified from a single realization in
+Section~\ref{sec:overestimation_peak_ampl}. Following the same logic,
+we test whether this is a genuine estimator bias or a finite-sample
+fluctuation by repeating the full pipeline -- survey sampling,
+heteroscedastic noise, latent signal, \nufftcf Gaussian-NUFFT ACF, and
+the fit of Equation~\ref{eq:astro_fit_model} -- over $n_{\rm mc}=20$
+independent realizations (Figure~\ref{fig:astro_mc}): the same model
+is fit to the noiseless theoretical curve, to the noise-free but
+irregularly-sampled latent signal, and to the fully observed
+(sampled$+$noisy) series.
+%
+\begin{figure}
+\centering
+\includegraphics[width=\columnwidth]{astro_taun_multi.pdf}
+\caption{Fitted $\tau_n$ over $n_{\rm mc}=20$ independent survey
+realizations, for the sampled-only latent signal and the
+sampled$+$noisy observed series, against the injected value (dashed).
+Medians are shown as red lines, box edges represent the first (Q1) and third (Q3) quartiles, and whiskers extend to the most extreme data point within 1.5 times the interquartile range (IQR) from the boxes.}
+\label{fig:astro_mc}
+\end{figure}
+
+Averaged over the 20 realizations, the fit recovers $\tau_n =
+3.64\pm0.19$~d (sampling only) and $3.60\pm0.24$~d
+(sampling$+$noise) [mean $\pm$ SEM], both consistent with the injected
+$\tau_n=3.5$~d, while the noiseless theoretical curve, which carries
+no randomness and is therefore fit only once, returns
+$\tau_n=3.46$~d. The per-realization scatter is substantial
+($\mathrm{std}\simeq0.86$--$1.09$~d), comparable to, or larger than,
+the $\sim0.6$~d offset seen for the single fiducial realization: the
+latter is not statistically distinguishable from the sampling noise
+floor. As in the CCF peak-amplitude case of
+Section~\ref{sec:overestimation_peak_ampl}, an apparent bias
+identified from a single, or a small number of, realization(s) is here
+again a finite-sample/selection effect rather than an intrinsic
+property of the \nufftcf estimator, and it shrinks -- in the mean,
+though not in the per-realization scatter, which is set by the
+survey information content rather than by the estimator -- once
+several independent realizations are combined. This reinforces, on
+an independent, physically-motivated case, the guidance of
+Section~\ref{sec:overestimation_peak_ampl} and
+Section~\ref{sec:discussion}: a single-realization deviation from the
+truth should always be weighed against the estimator sampling
+variance (accessible here via repeated simulation, or in practice via
+bootstrap on the real data) before being interpreted as a bias.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Timing Benchmarks}
