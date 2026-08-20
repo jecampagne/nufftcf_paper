@@ -52,6 +52,11 @@
 % figure directory
 \graphicspath{ {./figs/} }
 
+% help optimizing the spaces 
+\raggedbottom
+\widowpenalty=10000
+\clubpenalty=10000 
+%
 %%%%%%%%%%%%%%%%%%%%%%%
 \title{nufftcf: Fast Auto- and Cross-Correlation Function Estimation for
 	Irregularly-Sampled Time Series via the Non-Uniform FFT}
@@ -89,7 +94,10 @@ asymptotic scalings -- $O(n\log n)$ for \nufftcf versus $O(n^2)$ for
 moderate series lengths thanks to its low (millisecond-scale) overhead.
 On regularly-sampled data, \nufftcf dedicated FFT path
 further reduces both cost and overhead relative to its own NUFFT
-estimator. 
+estimator. Beyond this cross-validation exercise, we further
+demonstrate \nufftcf on a simulated ground-based stellar light curve
+combining a quasi-periodic rotation signal, correlated flicker noise,
+seasonal sampling gaps, and heteroscedastic measurement errors.
 \end{abstract}
 %
 \noindent
@@ -175,8 +183,8 @@ situates \nufftcf relative to them, and details the methodology, from the regula
 Section~\ref{sec:comparison} compares \nufftcf to \pastas and \pyzdcf on ACF and CCF use cases.
 Section~\ref{sec:astro_example} illustrates \nufftcf on a simulated astrophysical light curve closer to observational practice.
 Section~\ref{sec:benchmarks} presents timing benchmarks.
-Section~\ref{sec:discussion} discusses limitations and guidance on estimator choice, and Section~\ref{sec:conclusion} concludes.
-
+Section~\ref{sec:discussion} discusses limitations and guidance on estimator choice, and Section~\ref{sec:conclusion} concludes. The Appendix~\ref{app:algorithms} provides additional details on the \nufftcf  algorithms and implementation choices.
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Works and Methodology}
 \label{sec:related_methodology}
@@ -204,18 +212,15 @@ Let $x_t$, $t = 0,\dots,n-1$, be a zero-mean, weakly stationary process sampled 
 k=0,\dots,n-1,
 \label{eq:acf_regular}
 \end{equation}
-
 and the sample ACF is $\hat\rho_{xx}(k)=\hat R_{xx}(k)/\hat R_{xx}(0)$. The sample cross-covariance and cross-correlation between two co-sampled series $x_t$ and $y_t$ are defined analogously.
 
-For weakly stationary processes, the Wiener--Khinchin theorem states that the autocovariance (or cross-covariance) function and the power (or cross-)spectral density form a Fourier-transform pair. For finite sampled data, this relation is realized numerically through the discrete Fourier transform (DFT): the cross-spectrum is estimated as
-
+For weakly stationary processes, the Wiener–Khinchin theorem establishes that the autocovariance function and the power spectral density form a Fourier-transform pair. Similarly, the cross-covariance function and the cross-spectral density also form such a pair. For finite sampled data, these relationships are numerically realized through the discrete Fourier transform (DFT): the cross-spectrum is estimated as
 \begin{equation}
 \hat S_{xy}(f)=\hat X(f)\hat Y^*(f),
 \,
 \hat R_{xy}(k)=\mathcal F^{-1}\left[\hat S_{xy}(f)\right](k),
 \label{eq:wienerkhinchin}
 \end{equation}
-
 where $\hat X(f)=\mathcal F[x](f)$ (and similarly for $\hat Y(f)$) denotes the DFT of the sampled series. On a regular grid, this identity is evaluated efficiently using a pair of FFTs---a forward FFT to compute $\hat X(f)$ and $\hat Y(f)$, a pointwise complex-conjugate product to form $\hat S_{xy}(f)$, and an inverse FFT to recover $\hat R_{xy}(k)$---yielding an $O(n\log n)$ algorithm instead of the $O(n^2)$ direct lag-domain summation of Equation~\ref{eq:acf_regular}.
 
 This FFT-based approach provides the regular-grid baseline for correlation estimation. However, for irregularly-sampled data, where the sample times $t_1 < t_2 < \dots < t_n$ are not equally spaced, neither the sum in Equation~\ref{eq:acf_regular} nor the FFT pair can be applied directly. The literature describes four broad strategies to address this issue, which we outline below.
@@ -250,7 +255,7 @@ b_k(d) = \begin{cases}
 and the Gaussian kernel \citep{bjornstad2001}, which is the primary choice in \pastas and \nufftcf:
 \begin{equation}
 b_k(d) = \frac{1}{\sqrt{2\pi}\,h}\exp\left(-\frac{d^2}{2h^2}\right).
-\label{eq:gaussian_kernel}
+\label{eq:Gaussian_kernel}
 \end{equation}
 Here, $h$ is a bandwidth parameter typically set to match the mean sampling interval $\Delta t^{xy}$ (e.g., $h = \Delta t^{xy}/2$ for the rectangle kernel, $h = \Delta t^{xy}/4$ for the Gaussian kernel; see \citep{Rehfeld2011} for details). 
 
@@ -321,12 +326,11 @@ error for a given support width and secondly because its Fourier transform can
 be computed easily using a Gauss-Legendre quadrature integration), (ii) taking
 a standard FFT of the fine grid, and (iii) \textit{deconvolving} by dividing by
 the Fourier transform of the spreading kernel to correct for the smoothing
-introduced by the kernel.
+introduced by the kernel. Type~2 reverses this sequence. 
 
-type~2 reverses this sequence. This
-spreading kernel is an internal numerical-accuracy device of the NUFFT
+The spreading kernel is an internal numerical-accuracy device of the NUFFT
 algorithm itself, distinct from the statistical weighting kernels
-$b_k(\cdot)$ of Equation~\ref{eq:gaussian_kernel}. We return below to the distinction between the two kernels (spreading and statistical weighting).
+$b_k(\cdot)$ of Equation~\ref{eq:Gaussian_kernel}. We return below to the distinction between the two kernels (spreading and statistical weighting).
 %
 \subsection{From kernel-weighted estimators to NUFFT: the nufftcf approach}
 \label{sec:nufftcf_approach}
@@ -346,8 +350,8 @@ are. Concretely, \nufftcf:
     \item evaluates the correlation estimate at the requested lags by
     inverting this spectrum with a \textbf{type~2 NUFFT}, applying the
     Wiener--Khinchin theorem in the same spirit as the regular-grid FFT
-    pair of Section~\ref{sec:wk_regular}, but with both legs replaced by
-    their nonuniform-capable counterparts;
+    pair of Section~\ref{sec:wk_regular}, but replaced by
+    their nonuniform-capable counterparts.
 \end{enumerate}
 Algorithms~\ref{alg:ccf-nufft}--\ref{alg:acf-nufft} in
 Appendix~\ref{app:algorithms} give the complete pseudocode of the CCF and
@@ -363,7 +367,7 @@ represents the signal on a finite, periodic Fourier basis, it is subject
 to a small spectral-leakage bias for strongly periodic input with
 irregular or gappy sampling (quantified in
 Section~\ref{sec:benchmarks} and controllable via the number of Fourier
-modes); \nufftcf therefore also ships a direct, ``real-space''
+modes); \nufftcf therefore also provides a direct, ``real-space''
 evaluation of the same kernel-weighted estimator, at the original
 $O(n^2)$ cost, both as an accuracy reference and as the recommended
 choice when $n$ is modest and this bias must be avoided entirely
@@ -408,7 +412,7 @@ below compares only \nufftcf against \pyzdcf.
 \subsection{Test series and experimental setup}
 \label{sec:comparison_setup}
 %
-\begin{figure}
+\begin{figure}[h]
 	\centering
 	\includegraphics[width=\columnwidth]{synthetic_series.pdf}
 	\caption{The synthetic series used in the ACF benchmark: the
@@ -432,7 +436,7 @@ one-day base resolution:
 	autocovariance, its analytical ACF is $\rho(\tau)=e^{-\tau/\alpha}$.
 \end{itemize}
 Each process is then resampled onto three irregular time grids of
-different sparsity, yielding six benchmark series (\texttt{STS\_SIN}--3,
+different sparsity, yielding six benchmark series (\texttt{STS\_SIN}1--3,
 \texttt{STS\_EXP}1--3): (1) a mix of 30-day and 14-day regular sub-sampling with
 dense daily coverage over the last four years; (2) the same scheme with
 an additional three-year data gap; and (3) re-indexing onto a set of
@@ -445,9 +449,9 @@ sparse sampling and a few years of dense daily coverage.
 \textbf{CCF benchmark series\footnote{see \texttt{nufftcf\_ccf\_demo.ipynb} notebook.}.} Two complementary CCF setups are used, both
 without access to \pastas:
 \begin{itemize}
-	\item Shifted-timestamp \texttt{STS\_SIN/EXP} series:. The same \texttt{STS\_SIN} and \texttt{STS\_EXP} processes
+	\item Shifted-timestamp \texttt{STS\_SIN/EXP} series: The same \texttt{STS\_SIN} and \texttt{STS\_EXP} processes
 	used in the ACF benchmark are drawn over $n_{\rm days}=3650$~d, and
-	two independent, irregular observation networks $x(t_x)$ and $y(t_y)$
+	two independent, irregular observation series $x(t_x)$ and $y(t_y)$
 	sample the identical underlying process values, with $y$-timestamps 
 	shifted by a known delay $\tau_0$ relative to $x$-timestamps
 	($\sim43\%$ of days retained in each series). Because $x$ and $y$
@@ -482,8 +486,7 @@ without access to \pastas:
 		X_2(t) &= \rho\, e_1(t-\tau_0) + \sqrt{1-\rho^2}\, e_2(t),
 		\label{eq:ou_coupling}
 	\end{align}
-	with $\tau_0=60$~d and $\rho\in\{0.1,0.2,0.3,0.5,0.7,0.95\}$. Unlike the
-	shifted-timestamp case, here the lag is \emph{physical}: $X_2$ is a
+	with $\tau_0\!=\!\text{60\,d}$ and $\rho\!\in\!\{0.1,0.2,0.3,0.5,0.7,0.95\}$. Unlike the shifted-timestamp case, here the lag is \emph{physical}: $X_2$ is a
 	genuinely delayed, partially decorrelated copy of $X_1$, contaminated
 	by an independent noise process. The two series are sampled on
 	independent irregular grids retaining $\sim40\%$ and $\sim60\%$ of
@@ -498,14 +501,14 @@ without access to \pastas:
 \end{itemize}
 
 \textbf{Software configuration.} For \nufftcf we evaluate both the
-rectangle  and  Gaussian kernels (Equations~\ref{eq:rectangle_kernel}, \ref{eq:gaussian_kernel}) via the NUFFT-based estimator (and, for the
+rectangle  and  Gaussian kernels (Equations~\ref{eq:rectangle_kernel}, \ref{eq:Gaussian_kernel}) via the NUFFT-based estimator (and, for the
 fiducial CCF case, the direct real-space evaluation as an accuracy
 cross-check), using \texttt{bin\_width}$=0.5$~d as the kernel-bandwidth
 control parameter for all ACF and CCF runs, and evaluating every
 integer lag from $1$ to $365$~d (ACF) or $1$ to $180$~d (CCF). 
 
 For \pastas we call \texttt{pastas.stats.acf} with \texttt{bin\_method} set to
-\texttt{"rectangle"} and \texttt{"gaussian"} and \texttt{max\_gap}=$30$~d,
+\texttt{"rectangle"} and \texttt{"Gaussian"} and \texttt{max\_gap}=$30$~d,
 over the same lag range. 
 
 For \pyzdcf we use \texttt{uniform\_sampling = False}, \texttt{omit\_zero\_lags = True}, and its equal-population
@@ -612,7 +615,7 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 	\label{fig:ccf_ou}
 \end{figure*}
 %
-\subsection{Cross-correlation: nufftcf vs pyZDCF\\ (coupled OU-processes)}
+\subsection{Cross-correlation: nufftcf vs pyZDCF (coupled OU-processes)}
 \label{sec:comparison_ccf_ouproc}
 %
 \begin{table*}
@@ -626,9 +629,9 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 			\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}\cmidrule(lr){10-11}\cmidrule(lr){12-13}
 			Method & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. & val. & loc. \\
 			\midrule
-			\nufftcf gaussian  & 0.167 & 167 & 0.255 & 60 & 0.351 & 60 & 0.539 & 60 & 0.724 & 60 & 0.962 & 60 \\
+			\nufftcf Gaussian  & 0.167 & 167 & 0.255 & 60 & 0.351 & 60 & 0.539 & 60 & 0.724 & 60 & 0.962 & 60 \\
 			\nufftcf rectangle & 0.178 & 167 & 0.258 & 60 & 0.355 & 60 & 0.546 & 60 & 0.733 & 60 & 0.973 & 60 \\
-			realspace gaussian & 0.181 & 167 & 0.256 & 60 & 0.352 & 60 & 0.538 & 60 & 0.722 & 60 & 0.957 & 60 \\
+			realspace Gaussian & 0.181 & 167 & 0.256 & 60 & 0.352 & 60 & 0.538 & 60 & 0.722 & 60 & 0.957 & 60 \\
 			\pyzdcf             & 0.072 & 178.7 & 0.082 & 80.9 & 0.094 & 80.9 & 0.117 & 80.9 & 0.138 & 80.9 & 0.154 & 80.9 \\
 			\bottomrule
 		\end{tabular}
@@ -736,9 +739,9 @@ a pure noise fluctuation, located at $\mathrm{lag}=167$ rather than $60$.
 			\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}\cmidrule(lr){11-13}\cmidrule(lr){14-16}
 			Method & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio & $\Delta$ & $\mathrm{std\_far}$ & ratio \\
 			\midrule
-			nufftcf gaussian   & 0.055 & 0.047 & 1.16 & 0.051 & 0.045 & 1.14 & 0.039 & 0.041 & 0.96 & 0.024 & 0.038 & 0.64 & 0.012 & 0.042 & 0.28 \\
+			nufftcf Gaussian   & 0.055 & 0.047 & 1.16 & 0.051 & 0.045 & 1.14 & 0.039 & 0.041 & 0.96 & 0.024 & 0.038 & 0.64 & 0.012 & 0.042 & 0.28 \\
 			nufftcf rectangle  & 0.058 & 0.048 & 1.20 & 0.055 & 0.046 & 1.21 & 0.046 & 0.042 & 1.10 & 0.033 & 0.039 & 0.85 & 0.023 & 0.043 & 0.54 \\
-			realspace gaussian & 0.056 & 0.051 & 1.10 & 0.052 & 0.048 & 1.07 & 0.038 & 0.044 & 0.88 & 0.022 & 0.040 & 0.55 & 0.007 & 0.044 & 0.17 \\
+			realspace Gaussian & 0.056 & 0.051 & 1.10 & 0.052 & 0.048 & 1.07 & 0.038 & 0.044 & 0.88 & 0.022 & 0.040 & 0.55 & 0.007 & 0.044 & 0.17 \\
 			\bottomrule
 	\end{tabular}}
 \end{table*}
@@ -800,7 +803,7 @@ bias -- on an independently-motivated, physical use case, using repeated
 realizations rather than a longer baseline to demonstrate it.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{A Worked Example on a Simulated Astrophysical Light Curve}
+\section{A physical use-case: Simulated Astrophysical Light Curve}
 \label{sec:astro_example}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The synthetic series of Section~\ref{sec:comparison} were designed to
@@ -928,7 +931,7 @@ obtained directly from the data.
 \label{sec:astro_mc}
 %
 Taken at face value, the single-realization $\tau_n$ fit above
-($\sim4.1$~d) sits above the injected value ($3.5$~d) by more than its
+($\sim4.1$~d) is above the injected value ($3.5$~d) by more than its
 formal uncertainty, suggestive of a residual bias -- reminiscent of
 the CCF peak-amplitude offsets identified from a single realization in
 Section~\ref{sec:overestimation_peak_ampl}. Following the same logic,
@@ -936,7 +939,7 @@ we test whether this is a genuine estimator bias or a finite-sample
 fluctuation by repeating the full pipeline -- survey sampling,
 heteroscedastic noise, latent signal, \nufftcf Gaussian-NUFFT ACF, and
 the fit of Equation~\ref{eq:astro_fit_model} -- over $n_{\rm mc}=20$
-independent realizations (Figure~\ref{fig:astro_mc}): the same model
+independent realizations (Figure~\ref{fig:astro_mc}). The same model
 is fit to the noiseless theoretical curve, to the noise-free but
 irregularly-sampled latent signal, and to the fully observed
 (sampled$+$noisy) series.
@@ -953,24 +956,18 @@ Medians are shown as red lines, box edges represent the first (Q1) and third (Q3
 
 Averaged over the 20 realizations, the fit recovers $\tau_n =
 3.64\pm0.19$~d (sampling only) and $3.60\pm0.24$~d
-(sampling$+$noise) [mean $\pm$ SEM], both consistent with the injected
+(sampling$+$noise) [mean $\pm$ SEM\footnote{SEM stands for Standard Error of the Mean.}], both consistent with the injected
 $\tau_n=3.5$~d, while the noiseless theoretical curve, which carries
 no randomness and is therefore fit only once, returns
 $\tau_n=3.46$~d. The per-realization scatter is substantial
 ($\mathrm{std}\simeq0.86$--$1.09$~d), comparable to, or larger than,
 the $\sim0.6$~d offset seen for the single fiducial realization: the
 latter is not statistically distinguishable from the sampling noise
-floor. As in the CCF peak-amplitude case of
-Section~\ref{sec:overestimation_peak_ampl}, an apparent bias
-identified from a single, or a small number of, realization(s) is here
-again a finite-sample/selection effect rather than an intrinsic
-property of the \nufftcf estimator, and it shrinks -- in the mean,
-though not in the per-realization scatter, which is set by the
-survey information content rather than by the estimator -- once
-several independent realizations are combined. This reinforces, on
-an independent, physically-motivated case, the guidance of
-Section~\ref{sec:overestimation_peak_ampl} and
-Section~\ref{sec:discussion}: a single-realization deviation from the
+floor. As in the CCF peak-amplitude case of Section~\ref{sec:overestimation_peak_ampl}, an apparent bias identified from a single, or a small number of, realization(s) is again a finite-sample/selection effect rather than an intrinsic property of the \nufftcf estimator.
+This bias shrinks on average when several independent realizations are combined, even though the per-realization scatter remains unchanged, as it is determined by the survey information content rather than by the estimator itself.
+
+This test reinforces, on an independent, physically-motivated case, the guidance of
+Section~\ref{sec:overestimation_peak_ampl}: a single-realization deviation from the
 truth should always be weighed against the estimator sampling
 variance (accessible here via repeated simulation, or in practice via
 bootstrap on the real data) before being interpreted as a bias.
@@ -1012,7 +1009,7 @@ resampled with replacement, the point estimate is recomputed, and the
 model is refit; the standard deviation of the refit parameters across
 iterations gives the reported uncertainty. 
 
-For the sake of completeness and reproducibility, we detailthe exact hardware configuration used to conduct the benchmarks: this is a MacBook Pro (2020) equipped with a 2 GHz Intel Core i5 processor (quad-core), 512 KB of L2 cache per core, and 6 MB of shared L3 cache, along with 16 GB of LPDDR4X RAM (3733 MHz, dual-channel, 8 GB per channel), running macOS 26.5.2 (build 25F84).
+For the sake of completeness and reproducibility, we detail the exact hardware configuration used to conduct the benchmarks: this is a MacBook Pro (2020) equipped with a 2 GHz Intel Core i5 processor (quad-core), 512 KB of L2 cache per core, and 6 MB of shared L3 cache, along with 16 GB of LPDDR4X RAM (3733 MHz, dual-channel, 8 GB per channel), running macOS 26.5.2 (build 25F84).
 %
 \subsection{Irregularly-sampled data}
 %
@@ -1041,7 +1038,7 @@ moderately sized series, well before reaching the asymptotic regime.
 	\renewcommand{\arraystretch}{0.95}
 	\setlength{\tabcolsep}{5pt}
 	\caption{Fit results for irregularly- and regularly-sampled data.
-		\pastas gaussian/rectangle bin methods and \nufftcf nufft
+		\pastas Gaussian/rectangle bin methods and \nufftcf nufft
 		path follow $a\,n^2$ and $a\,n\ln(n)$ (resp.) $+\ \text{overhead}$;
 		\pastas \texttt{"regular"} bin method follows $a\,n +
 		\text{overhead}$; \nufftcf fft path follows $a\,n\ln(n) +
@@ -1052,15 +1049,15 @@ moderately sized series, well before reaching the asymptotic regime.
 		Sampling & Kernel & Algorithm & $a$ & Overhead [ms] & $R^2$ \\
 		\midrule
 		\multirow{4}{*}{Irregular}
-		& gaussian  & \pastas         & $(4.744\pm0.002)\times10^{-8}$ & $17.32\pm1.04$ & 1.00 \\
-		& gaussian  & \nufftcf        & $(1.370\pm0.033)\times10^{-6}$ & $2.17\pm0.59$  & 1.00 \\
+		& Gaussian  & \pastas         & $(4.744\pm0.002)\times10^{-8}$ & $17.32\pm1.04$ & 1.00 \\
+		& Gaussian  & \nufftcf        & $(1.370\pm0.033)\times10^{-6}$ & $2.17\pm0.59$  & 1.00 \\
 		& rectangle & \pastas         & $(5.448\pm0.004)\times10^{-8}$ & $3.08\pm0.88$  & 1.00 \\
 		& rectangle & \nufftcf        & $(4.712\pm0.230)\times10^{-7}$ & $1.71\pm0.30$  & 0.98 \\
 		\cmidrule(lr){1-6}
 		\multirow{8}{*}{Regular}
-		& gaussian  & \pastas         & $(4.738\pm0.026)\times10^{-8}$ & $12.89\pm6.31$ & 1.00 \\
-		& gaussian  & \nufftcf (fft)  & $(2.098\pm0.056)\times10^{-8}$ & $1.01\pm0.12$  & 0.99 \\
-		& gaussian  & \nufftcf (nufft)& $(1.351\pm0.002)\times10^{-6}$ & $28.43\pm3.29$ & 1.00 \\
+		& Gaussian  & \pastas         & $(4.738\pm0.026)\times10^{-8}$ & $12.89\pm6.31$ & 1.00 \\
+		& Gaussian  & \nufftcf (fft)  & $(2.098\pm0.056)\times10^{-8}$ & $1.01\pm0.12$  & 0.99 \\
+		& Gaussian  & \nufftcf (nufft)& $(1.351\pm0.002)\times10^{-6}$ & $28.43\pm3.29$ & 1.00 \\
 		& rectangle & \pastas         & $(4.818\pm0.038)\times10^{-8}$ & $0.24\pm2.04$  & 1.00 \\
 		& rectangle & \nufftcf (fft)  & $(1.314\pm0.083)\times10^{-8}$ & $0.61\pm0.30$  & 0.94 \\
 		& rectangle & \nufftcf (nufft)& $(4.267\pm0.073)\times10^{-7}$ & $10.05\pm2.70$ & 0.99 \\
@@ -1075,7 +1072,7 @@ moderately sized series, well before reaching the asymptotic regime.
 	\centering
 	\includegraphics[width=0.7\textwidth]{benchmark_acf_macosx_fit.pdf}
 	\caption{ACF benchmark, \nufftcf versus \pastas, on irregularly-sampled
-		data (gaussian and rectangle kernels). Robust fit (soft\_l1);
+		data (Gaussian and rectangle kernels). Robust fit (soft\_l1);
 		error bars show the min-to-max spread across repeats at each point.}
 	\label{fig:acf_bench}
 \end{figure*}
@@ -1084,10 +1081,10 @@ moderately sized series, well before reaching the asymptotic regime.
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.4\textwidth]{gaussian_benchmark_acf_regular_macosx_fit.pdf}
+	\includegraphics[width=0.4\textwidth]{Gaussian_benchmark_acf_regular_macosx_fit.pdf}
 	\caption{ACF benchmark on regularly-sampled data, \pastas versus
 		\nufftcf (dedicated FFT path and general-purpose NUFFT path),
-		gaussian kernel.}
+		Gaussian kernel.}
 	\label{fig:acf_regular_bench}
 \end{figure*}
 %
@@ -1096,39 +1093,30 @@ moderately sized series, well before reaching the asymptotic regime.
 When the data lie on a uniform grid, there is no need to pay for the
 generality of a NUFFT: \nufftcf also provides a dedicated classic-FFT
 path (\texttt{fft\_acf.py}) that reproduces the exact same
-gaussian/rectangle kernel definitions as the NUFFT and real-space
+Gaussian/rectangle kernel definitions as the NUFFT and real-space
 estimators, but via a plain FFT correlation with no numba/finufft
 dependency in the hot path. To quantify what this dedicated fast path
 buys over simply reusing the general-purpose NUFFT estimator on regular
 data, we benchmarked \pastas against both the FFT and NUFFT paths of
-\nufftcf for the gaussian and rectangle kernels, and additionally
+\nufftcf for the Gaussian and rectangle kernels, and additionally
 against \pastas own \texttt{"regular"} bin method (a fixed-size
-windowed \texttt{np.corrcoef} per lag, with no smoothing kernel), for
+windowed \texttt{numpy.corrcoef}\footnote{\url{https://numpy.org/doc/stable/reference/generated/numpy.corrcoef.html}} per lag, with no smoothing kernel), for
 which the comparison is limited to the dedicated \texttt{fft\_acf}
 no-kernel estimator, since NUFFT has no counterpart for this case. Note
 that \pastas \texttt{"regular"} bin method scales empirically as
-$O(n)$, unlike its $O(n^2)$ \texttt{"gaussian"}/\texttt{"rectangle"} bin
+$O(n)$, unlike its $O(n^2)$ \texttt{"Gaussian"}/\texttt{"rectangle"} bin
 methods, and is fit to $t \sim a\,n + \text{overhead}$ accordingly.
 
 Fit results are given in Table~\ref{tab:fit_results}, and the
 Gaussian kernel comparison is shown in
 Figure~\ref{fig:acf_regular_bench}. The dedicated FFT path is markedly
-faster than NUFFT on regular data (e.g.\ for the gaussian kernel, its
+faster than NUFFT on regular data (e.g.\ for the Gaussian kernel, its
 leading coefficient $a$ is $\sim$65$\times$ smaller and its overhead
 $\sim$30$\times$ lower), and, like the NUFFT path on irregular data,
 retains an $O(n\log n)$ advantage over \pastas $O(n^2)$
-gaussian/rectangle bin methods -- including over \pastas own $O(n)$
+Gaussian/rectangle bin methods -- including over \pastas own $O(n)$
 \texttt{"regular"} bin method, whose much larger leading coefficient
 outweighs its more favorable scaling.
-
-In summary, \nufftcf should be used with its NUFFT estimators for
-irregularly-sampled series, its intended use case, where it offers an
-$O(n\log n)$ alternative to \pastas $O(n^2)$ slotting technique; for
-regularly-sampled series, the dedicated classic-FFT path should be
-preferred over both \pastas and over reusing the general NUFFT
-estimator, since no smoothing kernel is theoretically needed on a
-uniform grid and the classic-FFT correlation reproduces the identical
-gaussian/rectangle estimators at a fraction of the cost.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion on \nufftcf}
@@ -1156,29 +1144,46 @@ limiting, as an reference against which a NUFFT-based result
 can be checked on a subset of the data. 
 %
 \subsection{Limitations}
-\label{sec:discussion_limitations}
+\label{sec:discussion_limitations_new}
 %
 Two limitations, quantified in Section~\ref{sec:comparison}, are worth
 restating as guidance rather than as a defect specific to \nufftcf.
 First, the Gaussian- and rectangle-kernel estimators, whether
 evaluated in real space or via NUFFT, share an intrinsic selection
-bias. This has lead to overestimating a CCF peak amplitude by an amount of
+bias. This has led to overestimating a CCF peak amplitude by an amount of
 order the background noise level of the estimate
-(Table~\ref{tab:bias_vs_background}, Figure~\ref{fig:ccf_ou}). 
-This is a
-property of maximizing over many noisy per-lag estimates, not a
+(Table~\ref{tab:bias_vs_background}, Figure~\ref{fig:ccf_ou}).
+This is a property of maximizing over many noisy per-lag estimates, not a
 NUFFT-specific artifact (Section~\ref{sec:overestimation_peak_ampl}), and it
 shrinks as the sampling density increases: a ten-fold larger sample already
 reduces the bias by a factor of a few and leaves only a small residual
-smoothing bias from averaging the CCF over a finite kernel bandwidth $h$. It
-is best addressed by increasing the number of sampled points where
-possible, by widening $h$, or by a bootstrap/Monte-Carlo calibration of the
-bias on surrogate data, in the spirit of \pyzdcf own internal resampling. 
+smoothing bias from averaging the CCF over a finite kernel bandwidth $h$.
+
+The same diagnosis extends beyond the CCF peak amplitude itself: in the
+physically-motivated light-curve case of Section~\ref{sec:astro_mc}, a
+single-realization time-delay fit that appeared offset from the injected
+value by more than its formal uncertainty turned out, once averaged over
+$n_{\rm mc}=20$ independent realizations, to be statistically consistent
+with the truth -- confirming that the apparent bias was a finite-sample
+selection effect rather than an intrinsic property of the estimator. 
+
+The
+practical lesson is the same in both cases: a single-realization deviation
+from the truth should always be weighed against the estimator sampling
+variance -- accessible via repeated simulation when available, or via
+bootstrap/Monte-Carlo resampling on the real data otherwise -- before being
+interpreted as evidence of a systematic bias. In practice, this limitation
+is best addressed by increasing the number of sampled points or independent
+realizations where possible, by widening $h$, or by a bootstrap/Monte-Carlo
+calibration of the bias on surrogate data, in the spirit of \pyzdcf own
+internal resampling.
+
 Second, in contrast to \pyzdcf, which uses coarser, data-adaptive
 equal-population bins, \nufftcf uses a dense, user-chosen lag grid evaluated
-pointwise. This gives much higher lag resolution (Section~\ref{sec:comparison_ccf})
-but, unlike \pyzdcf, does not itself supply per-lag uncertainty estimates, which a
-user wanting formal error bars must still obtain externally (e.g., by bootstrap).
+pointwise. This gives much higher lag resolution
+(Section~\ref{sec:comparison_ccf}) but, unlike \pyzdcf, does not itself
+supply per-lag uncertainty estimates, which a user wanting formal error
+bars must still obtain externally (e.g., by bootstrap).
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Summary and Conclusion}
@@ -1211,6 +1216,22 @@ irregularly-sampled time series increasingly produced by continuous
 monitoring and high-cadence surveys, without sacrificing the
 statistical grounding of the underlying estimator.
 
+
+Beyond this controlled, cross-implementation validation, we also
+exercised \nufftcf on a physically-motivated simulated use case
+(Section~\ref{sec:astro_example}): a stellar photometric light curve
+combining a quasi-periodic rotation signal, correlated ``flicker''
+noise, realistic ground-based sampling gaps, and heteroscedastic
+measurement noise. \nufftcf, used alone, recovers both the injected
+rotation period and the noise correlation time from the simulated
+observed series. Repeating this pipeline over several
+independent realizations further showed that an apparent bias
+suggested by a single realization was in fact a finite-sample
+selection effect rather than an intrinsic property of the estimator
+(Section~\ref{sec:astro_mc}), reinforcing on an independent, more
+realistic case the same conclusion reached from the synthetic
+peak-amplitude tests of Section~\ref{sec:overestimation_peak_ampl}.
+
 Future work may include extending \nufftcf uncertainty quantification
 beyond the deterministic effective pair count $b$ following \pyzdcf own
 approach, exploring additional weighting kernels within the same
@@ -1219,11 +1240,11 @@ by the GPU version of \texttt{FINUFFT} \citep{cuFINUFFT2021}  for
 the very largest ($n\gtrsim10^6$) time series that may emerge from
 continuous environmental and astronomical monitoring. 
 
-Finally, while
-the validation and benchmarks presented in this article rely on synthetic series
-with known, controlled statistical properties, the ultimate test of
-\nufftcf practical utility lies in its application to real-world
-data. Tests by the AGN reverberation-mapping community currently
+Finally, while the quantitative validation and benchmarks presented in
+this article rely on synthetic series with known, controlled
+statistical properties, complemented by a single physically-motivated
+simulated light curve, the ultimate test of \nufftcf practical utility
+lies in its application to real-world data.  Tests by the AGN reverberation-mapping community currently
 served by \pyzdcf, and by hydrogeologists relying on \pastas for
 groundwater time series analysis, would expose \nufftcf to
 observational irregularities --- gaps, heteroscedastic noise, and
@@ -1282,7 +1303,7 @@ Wiener--Khinchin identity of Equation~\ref{eq:wienerkhinchin} via a
 type~1 NUFFT (from nonuniform samples to uniform frequency grid) followed
 by a type~2 NUFFT (from uniform frequency grid to requested lags). Both
 weighting kernels supported by \nufftcf (Gaussian and rectangle; see
-Equations~\ref{eq:rectangle_kernel}--\ref{eq:gaussian_kernel}) share
+Equations~\ref{eq:rectangle_kernel}--\ref{eq:Gaussian_kernel}) share
 the same algorithmic structure.  They differ only in the smoothing
 operator $\mathcal{S}_h$ (Gaussian filter of width $h$, or box filter
 of size $\mathrm{round}(2h)$) applied to the raw NUFFT output, and in
@@ -1404,10 +1425,10 @@ instantiations of the same two-pointer scan, differing only in the role
 of the time arrays and the sign $\epsilon\in\{+1,-1\}$ in the window-center
 formula $c_j = t^{y}_j + \epsilon\,\tau_k$. For the ACF ($t^{y}=t^{x}=t$,
 $\epsilon=+1$), the window center is $c_j = t_j+\tau_k$ with pair condition
-$t_i-t_j\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian} and
+$t_i-t_j\approx\tau_k$, corresponding to \texttt{compute\_b\_Gaussian} and
 \texttt{compute\_b\_rectangle}. For the CCF ($t^{y}=s$, $t^{x}=t$,
 $\epsilon=-1$), the window center is $c_j = s_j-\tau_k$ with pair condition
-$s_j-t_i\approx\tau_k$, corresponding to \texttt{compute\_b\_gaussian\_cross}
+$s_j-t_i\approx\tau_k$, corresponding to \texttt{compute\_b\_Gaussian\_cross}
 and \texttt{compute\_b\_rectangle\_cross}.
 
 The sign flip encodes the asymmetry of the CCF (lag $+\tau$ means $y$ lags
@@ -1436,8 +1457,8 @@ because $x$ is correlated with itself.
 	}
 	\Return{$b$}
 	\smallskip
-	\small $\bullet$ \textbf{ACF:} $t^{y}{=}t^{x}{=}t$, $n_y{=}n_x{=}n$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian}.\quad
-	$\bullet$ \textbf{CCF:} $t^{y}{=}s$, $t^{x}{=}t$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_gaussian\_cross}.
+	\small $\bullet$ \textbf{ACF:} $t^{y}{=}t^{x}{=}t$, $n_y{=}n_x{=}n$, $\epsilon{=}{+1}$ $\Rightarrow$ \texttt{compute\_b\_Gaussian}.\quad
+	$\bullet$ \textbf{CCF:} $t^{y}{=}s$, $t^{x}{=}t$, $\epsilon{=}{-1}$ $\Rightarrow$ \texttt{compute\_b\_Gaussian\_cross}.
 \end{algorithm*}
 
 \begin{algorithm*}
@@ -1528,7 +1549,7 @@ $\to$ frequency), and therefore the fidelity of the reconstructed
 signal ahead of the type~2 evaluation. The default
 $N_1 = 32\max(n_x,n_y)$ (a $32\times$ oversampling factor) was
 validated empirically against the exact real-space estimator
-(\texttt{compute\_ccf\_gaussian\_realspace}; see
+(\texttt{compute\_ccf\_Gaussian\_realspace}; see
 \texttt{kernels.py}): a factor of $32$ is enough to bring the two
 estimators into close agreement for both the Gaussian and rectangle
 kernels. Higher oversampling yields only marginal further improvement
