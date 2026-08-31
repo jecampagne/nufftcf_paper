@@ -72,9 +72,9 @@
 %
 \begin{abstract}
 Estimating the auto-correlation function (ACF) and the
-cross-correlation function (CCF) of irregularly-sampled
+cross-correlation function (CCF) of sampled
 series is a standard task across different physics fields as e.g. astronomy, and
-environmental fields. We aim to provide an ACF/CCF estimator that is
+environmental fields. We aim to provide an ACF/CCF estimator  primarily designed fo irregularly sampled series that is
 numerically consistent with established, well-validated kernel-weighted
 definitions, while scaling as $O(n\log n)$ rather than $O(n^2)$.
 
@@ -205,7 +205,7 @@ kernel-weighted estimators to yield the \nufftcf approach
 \subsection{Correlation estimation on a regular grid: the Wiener--Khinchin theorem}
 \label{sec:wk_regular}
 %
-Let $x_t$, $t = 0,\dots,n-1$, be a zero-mean, weakly stationary process sampled at $N$ regularly spaced times with sampling interval $\Delta t$. The (biased) sample autocovariance at lag $k\Delta t$ is
+Let $x_t$, $t = 0,\dots,n-1$, be a zero-mean, weakly stationary process sampled at $n$ regularly spaced times with sampling interval $\Delta t$. The (biased) sample autocovariance at lag $k\Delta t$ is
 \begin{equation}
 \hat R_{xx}(k)=\frac{1}{n}\sum_{t=0}^{n-k-1}x_t\,x_{t+k},
 \qquad
@@ -257,9 +257,9 @@ and the Gaussian kernel \citep{bjornstad2001}, which is the primary choice in \p
 b_k(d) = \frac{1}{\sqrt{2\pi}\,h}\exp\left(-\frac{d^2}{2h^2}\right).
 \label{eq:Gaussian_kernel}
 \end{equation}
-Here, $h$ is a bandwidth parameter typically set to match the mean sampling interval $\Delta t^{xy}$ (e.g., $h = \Delta t^{xy}/2$ for the rectangle kernel, $h = \Delta t^{xy}/4$ for the Gaussian kernel; see \citep{Rehfeld2011} for details). 
+Here, $h$ is a bandwidth parameter typically set to match the mean sampling interval $\Delta t^{xy}$, see \cite{Rehfeld2011} for details.
 
-Given the irregular sampling common in geoscientific time series, \cite{Rehfeld2011} conducted a systematic benchmark of kernel-based estimators (Gaussian, $\sinc$, rectangle) against linear interpolation and the Lomb--Scargle approach. Using synthetic sinusoidal and autoregressive processes with controlled sampling irregularity, they found that the Gaussian-kernel estimator consistently exhibited the lowest, or close to the lowest, root-mean-square error and bias across nearly all test cases. This led the authors to recommend it over linear interpolation for irregularly sampled data.
+Given the irregular sampling common in geoscientific time series, \cite{Rehfeld2011} conducted a systematic benchmark of kernel-based estimators (Gaussian, $\sinc$, rectangle) against linear interpolation and the Lomb--Scargle approach, the latter being addressed in the following section. Using synthetic sinusoidal and autoregressive processes with controlled sampling irregularity, they found that the Gaussian-kernel estimator consistently exhibited the lowest, or close to the lowest, root-mean-square error (RMSE) and bias across nearly all test cases. This led the authors to recommend it over linear interpolation for irregularly sampled data.
 
 
 This methodology underpins the ACF estimator implemented in \pastas \citep{collenteur2019}, a widely used Python package for groundwater time-series analysis. \pastas offers Gaussian, rectangle, and regular-grid binning options for its ACF. As with slotting, kernel-weighted estimators evaluate a direct pairwise sum, with an overall cost of $O(n^2)$ for a full lag range (or $O(n)$ per individual lag).
@@ -320,15 +320,16 @@ Modern NUFFT algorithms, such as \texttt{FINUFFT} \citep{barnett2019finufft}
 (used by \nufftcf), compute both types in $O((n+m)\log(1/\varepsilon))$ time,
 where $\varepsilon$ is the requested accuracy. This is achieved by (i)
 \textit{gridding}, where each nonuniform sample is spread onto a fine uniform
-grid using a compactly-supported interpolation kernel (\texttt{FINUFFT} uses an
-``exponential of semicircle'' kernel, which is chosen to first minimize aliasing
-error for a given support width and secondly because its Fourier transform can
-be computed easily using a Gauss-Legendre quadrature integration), (ii) taking
+grid using a compactly-supported interpolation kernel, (ii) taking
 a standard FFT of the fine grid, and (iii) \textit{deconvolving} by dividing by
 the Fourier transform of the spreading kernel to correct for the smoothing
 introduced by the kernel. Type~2 reverses this sequence. 
 
-The spreading kernel is an internal numerical-accuracy device of the NUFFT
+\texttt{FINUFFT} uses the
+``exponential of semicircle'' kernel\footnote{$\phi_\beta(x)=e^{\beta\sqrt{1-x^2}}$ for $|x|\leq 1$ ($0$ elsewhere).} as preading kernel, which is chosen to first minimize aliasing
+error for a given support width and secondly because its Fourier transform can
+be computed easily using a Gauss-Legendre quadrature integration. Such spreading kernel
+is an internal numerical-accuracy device of the NUFFT
 algorithm itself, distinct from the statistical weighting kernels
 $b_k(\cdot)$ of Equation~\ref{eq:Gaussian_kernel}. We return below to the distinction between the two kernels (spreading and statistical weighting).
 %
@@ -367,7 +368,7 @@ represents the signal on a finite, periodic Fourier basis, it is subject
 to a small spectral-leakage bias for strongly periodic input with
 irregular or gappy sampling (quantified in
 Section~\ref{sec:benchmarks} and controllable via the number of Fourier
-modes); \nufftcf therefore also provides a direct, ``real-space''
+modes). \nufftcf therefore also provides a direct, ``real-space''
 evaluation of the same kernel-weighted estimator, at the original
 $O(n^2)$ cost, both as an accuracy reference and as the recommended
 choice when $n$ is modest and this bias must be avoided entirely
@@ -1320,7 +1321,7 @@ evaluates it at the requested lags using a type~2 NUFFT,
 smooths the result with the chosen kernel $\mathcal{S}_h$,
 and normalizes it to a Pearson correlation in $[-1,1]$.
 This normalization uses the matching effective pair count (Algorithm~\ref{alg:b-generic})
-and the geometric mean of the two series' ACF values at lag $0$,
+and the geometric mean of the two series ACF values at lag $0$,
 $\sqrt{\mathrm{ACF}_x(0)\cdot\mathrm{ACF}_y(0)}$,
 each obtained from Algorithm~\ref{alg:acf-scale0}.
 
