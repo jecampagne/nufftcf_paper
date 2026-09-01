@@ -543,7 +543,7 @@ than of either estimator.
 
 \begin{figure*}[p]
 	\centering
-	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_sin_acf.pdf}
+	\includegraphics[width=0.85\textwidth]{pastas_nufftcf_sts_sin_acf.pdf}
 	\caption{ACF of the\texttt{STS\_SIN}1--3 series: signal (top row), \pastas
 		vs.\ \nufftcf Gaussian-kernel ACF against the analytical truth
 		(second row), and residuals for the Gaussian and rectangle kernels
@@ -554,7 +554,7 @@ than of either estimator.
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{pastas_nufftcf_sts_exp_acf.pdf}
+	\includegraphics[width=0.85\textwidth]{pastas_nufftcf_sts_exp_acf.pdf}
 	\caption{Same as Figure~\ref{fig:pastas_exp}, for the \texttt{STS\_EXP}1--3
 		series.}
 	\label{fig:pastas_exp}
@@ -564,8 +564,8 @@ than of either estimator.
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_sin_acf.pdf}
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_sts_exp_acf.pdf}
+	\includegraphics[width=0.85\textwidth]{zdcf_nufftcf_sts_sin_acf.pdf}
+	\includegraphics[width=0.85\textwidth]{zdcf_nufftcf_sts_exp_acf.pdf}
 	\caption{Top: ACF of the \texttt{STS\_SIN}1--3 series: signal (top row) and ACF
 		(bottom row), comparing \nufftcf (Gaussian and rectangle kernels,
 		with per-series computation time) to \pyzdcf (\texttt{minpts}=11
@@ -585,8 +585,8 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_SIN_ccf.pdf}
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_ccf.pdf}
+	\includegraphics[width=0.85\textwidth]{zdcf_nufftcf_SIN_ccf.pdf}
+	\includegraphics[width=0.85\textwidth]{zdcf_nufftcf_EXP_ccf.pdf}
 	\caption{Top: CCF of the shifted-timestamp  \texttt{STS\_SIN} test
 		($\tau_0=60$~d): \nufftcf Gaussian vs. its own real-space reference
 		(left) and vs. its rectangle kernel (right), both compared to
@@ -597,7 +597,7 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_EXP_tau0_ccf.pdf}
+	\includegraphics[width=0.85\textwidth]{zdcf_nufftcf_EXP_tau0_ccf.pdf}
 	\caption{CCF peak recovery for the shifted-timestamp EXP network
 		test as the injected delay $\tau_0$ varies over $\{20,60,120\}$~d
 		($n\sim1500$ points per network): \nufftcf Gaussian vs.\ \pyzdcf,
@@ -607,7 +607,7 @@ Figure~\ref{fig:ccf_sin_exp} shows the fiducial $\tau_0=60$~d shifted-timestamp 
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{zdcf_nufftcf_OUproc_rho_ccf.pdf}
+	\includegraphics[width=0.85\textwidth]{zdcf_nufftcf_OUproc_rho_ccf.pdf}
 	\caption{CCF of the coupled Ornstein--Uhlenbeck processes of
 		Equation~\ref{eq:ou_coupling} ($\tau_0=60$~d, $\alpha=10$~d), for
 		coupling strengths $\rho=0.1,0.4,0.7,0.95$: \nufftcf (Gaussian and
@@ -1071,7 +1071,7 @@ moderately sized series, well before reaching the asymptotic regime.
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.7\textwidth]{benchmark_acf_macosx_fit.pdf}
+	\includegraphics[width=0.85\textwidth]{benchmark_acf_macosx_fit.pdf}
 	\caption{ACF benchmark, \nufftcf versus \pastas, on irregularly-sampled
 		data (Gaussian and rectangle kernels). Robust fit (soft\_l1);
 		error bars show the min-to-max spread across repeats at each point.}
@@ -1082,7 +1082,7 @@ moderately sized series, well before reaching the asymptotic regime.
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.4\textwidth]{Gaussian_benchmark_acf_regular_macosx_fit.pdf}
+	\includegraphics[width=0.5\textwidth]{Gaussian_benchmark_acf_regular_macosx_fit.pdf}
 	\caption{ACF benchmark on regularly-sampled data, \pastas versus
 		\nufftcf (dedicated FFT path and general-purpose NUFFT path),
 		Gaussian kernel.}
