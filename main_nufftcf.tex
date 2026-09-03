@@ -212,7 +212,7 @@ Let $x_t$, $t = 0,\dots,n-1$, be a zero-mean, weakly stationary process sampled 
 k=0,\dots,n-1,
 \label{eq:acf_regular}
 \end{equation}
-and the sample ACF is $\hat\rho_{xx}(k)=\hat R_{xx}(k)/\hat R_{xx}(0)$. The sample cross-covariance and cross-correlation between two co-sampled series $x_t$ and $y_t$ are defined analogously.
+and the sample ACF is\footnote{This normalization follows MATLAB convention (\url{https://uk.mathworks.com/help/matlab/ref/xcorr.html}), where $\hat{R}_{xx}(0)$ is the total energy of the signal. For cross-correlation, the normalization factor is $\sqrt{\hat{R}_{xx}(0)\hat{R}_{yy}(0)}$.} $\hat\rho_{xx}(k)=\hat R_{xx}(k)/\hat R_{xx}(0)$. The sample cross-covariance and cross-correlation between two co-sampled series $x_t$ and $y_t$ are defined analogously.
 
 For weakly stationary processes, the Wiener–Khinchin theorem establishes that the autocovariance function and the power spectral density form a Fourier-transform pair. Similarly, the cross-covariance function and the cross-spectral density also form such a pair. For finite sampled data, these relationships are numerically realized through the discrete Fourier transform (DFT): the cross-spectrum is estimated as
 \begin{equation}
@@ -257,7 +257,7 @@ and the Gaussian kernel \citep{bjornstad2001}, which is the primary choice in \p
 b_k(d) = \frac{1}{\sqrt{2\pi}\,h}\exp\left(-\frac{d^2}{2h^2}\right).
 \label{eq:Gaussian_kernel}
 \end{equation}
-Here, $h$ is a bandwidth parameter typically set to match the mean sampling interval $\Delta t^{xy}$, see \cite{Rehfeld2011} for details.
+Here, $h$ is a bandwidth parameter typically set to match the mean sampling interval $\Delta t^{xy}$, see \cite{Rehfeld2011} for details. Another typical choice, not yet implemented in the current version of \nufftcf, is the Hanning kernel \citep{Max-Moerbeck2014}.
 
 Given the irregular sampling common in geoscientific time series, \cite{Rehfeld2011} conducted a systematic benchmark of kernel-based estimators (Gaussian, $\sinc$, rectangle) against linear interpolation and the Lomb--Scargle approach, the latter being addressed in the following section. Using synthetic sinusoidal and autoregressive processes with controlled sampling irregularity, they found that the Gaussian-kernel estimator consistently exhibited the lowest, or close to the lowest, root-mean-square error (RMSE) and bias across nearly all test cases. This led the authors to recommend it over linear interpolation for irregularly sampled data.
 
@@ -1241,11 +1241,7 @@ by the GPU version of \texttt{FINUFFT} \citep{cuFINUFFT2021}  for
 the very largest ($n\gtrsim10^6$) time series that may emerge from
 continuous environmental and astronomical monitoring. 
 
-Finally, while the quantitative validation and benchmarks presented in
-this article rely on synthetic series with known, controlled
-statistical properties, complemented by a single physically-motivated
-simulated light curve, the ultimate test of \nufftcf practical utility
-lies in its application to real-world data.  Tests by the AGN reverberation-mapping community currently
+Finally, while the quantitative validation and benchmarks in this article rely on synthetic series with known, controlled statistical properties---complemented by a single physically motivated simulated light curve---the ultimate test of \nufftcf practical utility lies in its application to both more realistic time series simulations, such as those developed by \cite{Emmanoulopoulos2013}, and real-world data.  Tests by the AGN reverberation-mapping community currently
 served by \pyzdcf, and by hydrogeologists relying on \pastas for
 groundwater time series analysis, would expose \nufftcf to
 observational irregularities --- gaps, heteroscedastic noise, and
@@ -1280,8 +1276,9 @@ All AI-generated suggestions were carefully reviewed and validated by the author
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Acknowledgments}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-We thank the developers of \texttt{FINUFFT}, \pastas, and
-\pyzdcf, against which \nufftcf is validated.
+I would like to thank Julian Hamo for fruitful discussions, as well as the developers 
+of \texttt{FINUFFT}, the library upon which \nufftcf is based, \pastas, and \pyzdcf, 
+against which \nufftcf is validated.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\bibliographystyle{apsrev4-1}
